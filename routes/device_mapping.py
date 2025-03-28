@@ -10,7 +10,6 @@ templates = Jinja2Templates(directory="templates")
 # Stav připojení
 opc_client = None
 is_connected = False
-opc_value = None
 status_message = "❌ Nepřipojeno"
 
 
@@ -21,12 +20,11 @@ async def devices(request: Request):
 
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request):
-    global is_connected, opc_value, status_message
+    global is_connected, status_message
     opc_devices = request.session.get("opc_devices", [])
     return templates.TemplateResponse("device.html", {
         "request": request,
         "is_connected": is_connected,
-        "opc_value": opc_value,
         "status_message": status_message,
         "opc_devices": opc_devices
     })
@@ -34,7 +32,7 @@ async def device(request: Request):
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request):
-    global opc_client, is_connected, opc_value, status_message
+    global opc_client, is_connected, status_message
     try:
         opc_client = Client("opc.tcp://pct-kepdev.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -49,8 +47,6 @@ async def connect_opcua(request: Request):
         opc_client.set_password("Kepserver_test1")
         opc_client.connect()
 
-        node = opc_client.get_node("ns=2;s=Channel1.Device1.str1")
-        opc_value = node.get_value()
         is_connected = True
         status_message = "✅ Připojeno"
     except Exception as e:
@@ -63,7 +59,7 @@ async def connect_opcua(request: Request):
 
     for ch in channels:
         ch_name = ch.get_browse_name().Name
-        if ch_name in ["Channel1", "Channel2"]:
+        if ch_name in ["PAINT_DBR_TEST", "PROD_DBR_TEST"]:
             for dev in ch.get_children():
                 dev_name = dev.get_browse_name().Name
                 if dev_name[0] != "_":
