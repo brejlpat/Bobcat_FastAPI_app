@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <title>Registration</title>
+</head>
+<body>
+
+    {# Flash zpráva z FastAPI session #}
+    {% if request.session.get("flash") %}
+        <ul class="flash-messages">
+            <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
+        </ul>
+        {% set _ = request.session.pop("flash") %}
+    {% endif %}
+
+    <div class="body">
+        <div class="container" style="width: 30%;">
+        <h1>Registration</h1>
+        <p>{{ string }}</p>
+
+        <form action="/auth/register" method="post">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="email">E-mail:</label>
+            <input type="text" id="email" name="email" required>
+
+            <button type="submit">Register</button>
+        </form>
+        </div>
+    </div>
+</body>
+</html>

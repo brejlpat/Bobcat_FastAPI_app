@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <title>Správa uživatelů</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="body">
+        <div class="container">
+            <h1>Account management</h1>
+
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+                {% for user in df_users %}
+                <tr>
+                    <td>{{ user.ID }}</td>
+                    <td>{{ user.Username }}</td>
+                    <td>{{ user.Role }}</td>
+                    <td>
+                        <div class="role_buttons">
+                            <form action="/admin/set_admin/{{ user.ID }}"><button class="role_button">SET Admin</button></form>
+                            <form action="/admin/set_production/{{ user.ID }}"><button class="role_button">SET Production</button></form>
+                            <form action="/admin/set_user/{{ user.ID }}"><button class="role_button">SET User</button></form>
+                            <form action="/admin/delete_account/{{ user.ID }}"><button class="role_button">DELETE Account</button></form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <br>
+            <a href="/main/home"><button>Home page</button></a>
+        </div>
+    </div>
+</body>
+</html>

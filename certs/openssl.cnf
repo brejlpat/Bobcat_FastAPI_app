@@ -1,0 +1,11 @@
+[ req ]
+default_bits       = 2048
+distinguished_name = req_distinguished_name
+x509_extensions    = v3_req
+prompt             = no
+
+[ req_distinguished_name ]
+CN = opc_client
+
+[ v3_req ]
+subjectAltName = URI:urn:FreeOpcUa:python:client

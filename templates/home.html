@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <title>Doosan Bobcat App</title>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="#"><img src="/static/images/bobcat_logo.png" alt="Doosan Bobcat" class="logo"></a>
+            <a href="/automation/automation">Automation</a>
+            <a href="#">CNC Machine</a>
+            <a href="/device_mapping/lines">Device Mapping</a>
+        </div>
+        <div class="nav-right">
+            <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">
+            <span class="username">{{ request.session["username"] }}</span>
+            {% if request.session["role"] == "admin" %}
+                <a href="/admin/users" class="btn-admin">Account management</a>
+            {% endif %}
+            <a href="/auth/logout" class="btn-logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="content">
+        <!-- Ikony s odkazy -->
+        <div class="icon-links">
+            <a href="/automation/dashboard"><img src="/static/images/automation-icon.png" alt="Automation"><p>Automation</p></a>
+            <a href="#"><img src="/static/images/cnc-icon.png" alt="CNC Machine"><p>CNC Machine</p></a>
+            <a href="/device_mapping/lines"><img src="/static/images/device-icon.png" alt="Device Mapping"><p>Device Mapping</p></a>
+        </div>
+
+    <div style="display:grid">
+        <div class="stats-section">
+            {% if request.session["role"] == "admin" %}
+            <div class="stat-card">
+                <h3>👥 Celkový počet uživatelů</h3>
+                <p class="stat-number">{{ users_amount }}</p>
+            </div>
+            {% endif %}
+
+        </div>
+        <div class="database">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Datum</th>
+                        <th>Line</th>
+                        <th>Planned Day</th>
+                        <th>Shifts</th>
+                        <th>Produced</th>
+                        <th>Difference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in data_list %}
+                    <tr>
+                        <td>{{ data['ID'] }}</td>
+                        <td>{{ data['Datum'] }}</td>
+                        <td>{{ data['Line'] }}</td>
+                        <td>{{ data['PlannDay'] }}</td>
+                        <td>{{ data['Shifts'] }}</td>
+                        <td>{{ data['Produced'] if data['Produced'] != 'N/A' else 'N/A' }}</td>
+                        <td>{{ data['Difference'] if data['Difference'] != 'N/A' else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+        <!-- Okno na novinky -->
+        <div class="news-section">
+            <h2>News</h2>
+            <p>📢 Admins now can edit account management!</p>
+            <p>⚙️ We´ve updated the CNC machine section</p>
+            <p>🔔 There was a fried cheese today in the canteen!</p>
+        </div>
+    </div>
+
+</body>
+</html>

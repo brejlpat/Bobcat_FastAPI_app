@@ -1,0 +1,38 @@
+from opcua import Client, ua
+from opcua.ua import uaerrors
+import logging
+
+client = Client("opc.tcp://pct-kepdev.corp.doosan.com:49320")
+client.set_security_string(
+    "Basic256Sha256,SignAndEncrypt,"
+    "certs/client_cert.der,"
+    "certs/client_key.pem,"
+    "certs/server_cert.der"
+)
+
+client.application_uri = "urn:FreeOpcUa:python:client"
+
+client.set_user("test")
+client.set_password("Kepserver_test1")
+
+# 👉 TESTUJ BEZ LOGINU
+# client.set_user("Administrator")
+# client.set_password("Kepserver_test1")
+for ep in client.connect_and_get_server_endpoints():
+    print("👉 SecurityPolicy:", ep.SecurityPolicyUri)
+    for token in ep.UserIdentityTokens:
+        print("   🔐 Token Type:", token.TokenType.name, "| Policy:", token.PolicyId)
+
+try:
+    print("🔌 Připojuji se k serveru...")
+    client.connect()
+    print("✅ Připojeno a aktivováno!")
+except uaerrors.UaStatusCodeError as e:
+    print(f"❌ UA Error: {e}")
+except Exception as e:
+    print(f"❌ Obecná chyba: {e}")
+
+node = client.get_node("ns=3;s=TESTING_DBR.Device1.log1")
+val = ua.DataValue(ua.Variant("test_value", ua.VariantType.String))
+node.set_value(val)
+print("✍️ Zapsáno!")

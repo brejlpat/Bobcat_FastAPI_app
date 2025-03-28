@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ request.url_for('static', path='style.css') }}">
+    <link rel="shortcut icon" href="{{ request.url_for('static', path='images/favicon.ico') }}" type="image/x-icon">
+    <title>Doosan Bobcat App</title>
+</head>
+<body>
+    <div class="body">
+        <div class="container">
+            <h1>Welcome to DOOSAN Bobcat App</h1>
+            <h2>Login</h2>
+            {# Flash zpráva z FastAPI session #}
+            {% if request.session.get("flash") %}
+                <ul class="flash-messages">
+                    <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
+                </ul>
+                {% set _ = request.session.pop("flash") %}
+            {% endif %}
+
+            <form action="/auth/login" method="post">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" value="" required>
+
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+
+                <button type="submit">Login</button>
+            </form>
+
+            <br>
+            <a href="/auth/register">Create an account</a>
+        </div>
+    </div>
+</body>
+</html>

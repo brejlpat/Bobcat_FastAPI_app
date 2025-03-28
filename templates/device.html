@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>OPC UA připojení</h1>
+    <p><strong>Status:</strong> {{ status_message }}</p>
+
+    <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}">
+        <button type="submit">
+            {{ 'Odpojit' if is_connected else 'Připojit' }}
+        </button>
+    </form>
+
+    {% if is_connected and opc_value %}
+        <h2>Tag: <code>Channel2.Device1.str1</code></h2>
+        <table>
+            <thead>
+                <tr><th>Hodnota</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>{{ opc_value }}</td></tr>
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
