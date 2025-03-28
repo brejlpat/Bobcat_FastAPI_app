@@ -1,6 +1,6 @@
 from opcua import Client, ua
 from opcua.ua import uaerrors
-import logging
+import time
 
 client = Client("opc.tcp://pct-kepdev.corp.doosan.com:49320")
 client.set_security_string(
@@ -32,7 +32,13 @@ except uaerrors.UaStatusCodeError as e:
 except Exception as e:
     print(f"❌ Obecná chyba: {e}")
 
-node = client.get_node("ns=3;s=TESTING_DBR.Device1.log1")
-val = ua.DataValue(ua.Variant("test_value", ua.VariantType.String))
+"""node = client.get_node("ns=2;s=Channel1.Device1.str3")
+time.sleep(0.5)
+val = ua.DataValue(ua.Variant("asdfjklů", ua.VariantType.String))
 node.set_value(val)
-print("✍️ Zapsáno!")
+print("✍️ Zapsáno!")"""
+
+node = client.get_node("ns=2;s=Channel2.PLC_S7_TEST.int3")
+val = ua.DataValue(ua.Variant(9999, ua.VariantType.UInt16))  # 12345 je příklad
+node.set_value(val)
+print("✍️ Zapsáno jako UInt16!")

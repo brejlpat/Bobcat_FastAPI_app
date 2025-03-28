@@ -5,22 +5,44 @@
     <h1>OPC UA připojení</h1>
     <p><strong>Status:</strong> {{ status_message }}</p>
 
-    <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}">
-        <button type="submit">
+<!-- Centrování buttonu opravněně -->
+<div style="text-align: center; margin-bottom: 20px;">
+    <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}" style="display: inline-block;">
+        <button type="submit" style="width: 200px;">
             {{ 'Odpojit' if is_connected else 'Připojit' }}
         </button>
     </form>
-
-    {% if is_connected and opc_value %}
-        <h2>Tag: <code>Channel2.Device1.str1</code></h2>
-        <table>
-            <thead>
-                <tr><th>Hodnota</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>{{ opc_value }}</td></tr>
-            </tbody>
-        </table>
-    {% endif %}
 </div>
+
+
+<div id="opc-table"></div>
+    <section style="display: flex; gap: 40px; grid-template-columns: repeat(6, 1fr); justify-items: center">
+    {% if is_connected and opc_devices %}
+        {% for item in opc_devices %}
+            <div style="display: grid">
+            <h2>Channel: {{ item.channel }}</h2>
+            <h3>Device: {{ item.device }}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tag Name</th>
+                        <th>Tag Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tag in item.tags %}
+                        <tr>
+                            <td>{{ tag.name }}</td>
+                            <td>{{ tag.value }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+            </div>
+        {% endfor %}
+    {% endif %}
+    </section>
+</div>
+
 {% endblock %}
