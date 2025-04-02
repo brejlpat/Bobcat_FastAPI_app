@@ -32,13 +32,13 @@ except uaerrors.UaStatusCodeError as e:
 except Exception as e:
     print(f"❌ Obecná chyba: {e}")
 
-node = client.get_node("ns=2;s=PROD_DBR_TEST.Torque Tool.str3")
+"""node = client.get_node("ns=2;s=PROD_DBR_TEST.Torque Tool.str3")
 time.sleep(0.5)
 val = ua.DataValue(ua.Variant("asdfjklů", ua.VariantType.String))
 node.set_value(val)
-print("✍️ Zapsáno!")
+print("✍️ Zapsáno!")"""
 
-"""node = client.get_node("ns=2;s=Channel2.PLC_S7_TEST.int3")
+node = client.get_node("ns=2;s=PAINT_DBR_TEST.PLC_S7_TEST.int3")
 val = ua.DataValue(ua.Variant(9999, ua.VariantType.UInt16))  # 12345 je příklad
 node.set_value(val)
-print("✍️ Zapsáno jako UInt16!")"""
+print("✍️ Zapsáno jako UInt16!")
