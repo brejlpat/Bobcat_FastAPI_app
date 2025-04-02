@@ -98,3 +98,8 @@ async def disconnect_opcua():
 
 def get_is_connected():
     return is_connected
+
+
+@router.get("/channel_setting", response_class=HTMLResponse)
+async def channel_setting(request: Request):
+    return templates.TemplateResponse("channel_setting.html", {"request": request})

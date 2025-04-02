@@ -1,18 +1,22 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="container">
+    <section>
+        <a href="/device_mapping/channel_setting"><button>Create device</button></a>
+    </section>
     <h1>OPC UA připojení</h1>
     <p><strong>Status:</strong> {{ status_message }}</p>
 
-<!-- Centrování buttonu opravněně -->
-<div style="text-align: center; margin-bottom: 20px;">
-    <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}" style="display: inline-block;">
-        <button type="submit" style="width: 200px;">
-            {{ 'Odpojit' if is_connected else 'Připojit' }}
-        </button>
-    </form>
-</div>
+    <!-- Centrování buttonu opravněně -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}" style="display: inline-block;">
+            <button type="submit" style="width: 200px;">
+                {{ 'Disconnect' if is_connected else 'Connect' }}
+            </button>
+        </form>
+    </div>
 
 
 <div id="opc-table"></div>

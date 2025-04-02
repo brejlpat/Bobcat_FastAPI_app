@@ -7,7 +7,7 @@ device_name = "MyNewDevice10"
 url = f"http://127.0.0.1:57412/config/v1/project/channels/{channel_name}/devices"
 
 # Přihlašovací údaje pro REST API Kepware
-username = "Administrator"
+username = "test"
 password = "Kepserver_test1"
 headers = {"Content-Type": "application/json"}
 
