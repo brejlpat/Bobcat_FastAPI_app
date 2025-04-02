@@ -29,10 +29,11 @@ async def index(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
+"""
 @app.on_event("startup")
 async def show_routes():
     print("📡 Registrované routy:")
     for route in app.routes:
         if isinstance(route, Route):
             print(f"{route.path} ({','.join(route.methods)})")
-
+"""

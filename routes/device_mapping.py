@@ -102,4 +102,4 @@ def get_is_connected():
 
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request):
-    return templates.TemplateResponse("channel_setting.html", {"request": request})
+    return templates.TemplateResponse("driver_setting.html", {"request": request})

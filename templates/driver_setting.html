@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Create new channel</h1>
+    <form method="post" action="/create_device/channel" class="form-grid">
+
+        <label for="driver">Choose the driver:</label>
+        <select name="driver" id="driver">
+            <option value="OPC UA Client">OPC UA Client</option>
+            <option value="Simulator">Simulator</option>
+        </select>
+
+        <button type="submit" class="centered-button">Next</button>
+    </form>
+</div>
+{% endblock %}

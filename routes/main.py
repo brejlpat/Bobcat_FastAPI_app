@@ -46,9 +46,9 @@ async def home(request: Request):
     try:
         MSengine = create_engine(MSconnection_string)
         MSconnection = MSengine.connect()
-        print("Successfully connected to MSSQL")
+        #print("Successfully connected to MSSQL")
     except Exception as e:
-        print(f"Error: {e}")
+        #print(f"Error: {e}")
         return templates.TemplateResponse("home.html", {
             "request": request,
             "title": "Domovská stránka",

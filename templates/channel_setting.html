@@ -7,11 +7,8 @@
         <label for="channel_name">* Channel name:</label>
         <input type="text" id="channel_name" name="channel_name" required>
 
-        <label for="driver">* Device driver:</label>
-        <select name="driver" id="driver">
-            <option value="OPC UA Client">OPC UA Client</option>
-            <option value="Simulator">Simulator</option>
-        </select>
+        <label for="driver">Driver:</label>
+        <input type="text" id="driver" name="driver" value="{{ driver }}" readonly>
 
         <label for="endpoint_url">* Endpoint URL:</label>
         <input type="text" id="endpoint_url" name="endpoint_url" value="opc.tcp://10.52.32.214:4840" required>

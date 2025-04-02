@@ -3,23 +3,20 @@
 {% block content %}
 <div class="container">
     <h1>Create new device</h1>
-    <form method="post" action="/create_device/create_channel" class="form-grid">
-        <label for="channel_name">* Channel name:</label>
-        <input type="text" id="channel_name" name="channel_name" required>
+    <form method="post" action="/create_device/create_OPC_UA_CLIENT_device" class="form-grid">
+        <label for="channel_name">Channel name:</label>
+        <input type="text" id="channel_name" name="channel_name" readonly value="{{ channel_name }}">
 
-        <label for="driver">* Device driver:</label>
-        <select name="driver" id="driver">
-            <option value="OPC UA Client">OPC UA Client</option>
-            <option value="Simulator">Simulator</option>
-        </select>
+        <label for="device_name">* Device name:</label>
+        <input type="text" id="device_name" name="device_name" required>
 
-        <label for="endpoint_url">* Endpoint URL:</label>
-        <input type="text" id="endpoint_url" name="endpoint_url" value="opc.tcp://10.52.32.214:4840" required>
+        <label for="driver">Driver:</label>
+        <input type="text" id="driver" name="driver" value="{{ driver }}" readonly>
 
         <label for="description">Description:</label>
         <input type="text" id="description" name="description">
 
-        <button type="submit" class="centered-button">Create channel</button>
+        <button type="submit" class="centered-button">Create device</button>
     </form>
 </div>
 {% endblock %}
