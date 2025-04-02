@@ -192,8 +192,8 @@ async def create_tag(
 
     # Výsledek
     if response.status_code == 201:
-        status_message = f"✅ Zařízení '{device_name}' bylo úspěšně vytvořeno v kanálu '{channel_name}'!"
+        status_message = f"Tag created in '{device_name}' in channel '{channel_name}'!"
     else:
-        status_message = f"❌ Chyba při vytváření zařízení: {response.status_code}"
+        status_message = f"Failed to create the tag: {response.status_code}"
 
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message})
