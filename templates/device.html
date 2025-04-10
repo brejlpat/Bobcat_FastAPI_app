@@ -6,7 +6,7 @@
     <section>
         <a href="/device_mapping/channel_setting"><button>Create device</button></a>
     </section>
-    <h1>OPC UA připojení</h1>
+    <h1>OPC UA connection</h1>
     <p><strong>Status:</strong> {{ status_message }}</p>
 
     <!-- Centrování buttonu opravněně -->
@@ -19,34 +19,20 @@
     </div>
 
 
-<div id="opc-table"></div>
-    <section style="display: flex; gap: 40px; grid-template-columns: repeat(6, 1fr); justify-items: center">
-    {% if is_connected and opc_devices %}
-        {% for item in opc_devices %}
-            <div style="display: grid">
-            <h2>Channel: {{ item.channel }}</h2>
-            <h3>Device: {{ item.device }}</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Tag Name</th>
-                        <th>Tag Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tag in item.tags %}
-                        <tr>
-                            <td>{{ tag.name }}</td>
-                            <td>{{ tag.value }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <br>
-            </div>
-        {% endfor %}
-    {% endif %}
+<div id="opc-table">
+    <section style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; justify-items: center;">
+        {% if is_connected and opc_devices %}
+            {% for item in opc_devices %}
+                <a href="/device_mapping/device_details?channel={{ item.channel }}&device={{ item.device }}">
+                    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 10px; text-align: center;">
+                        <h2>{{ item.channel }}</h2>
+                        <h3>Device:<br>{{ item.device }}</h3>
+                        <img src="/static/images/device.png" alt="Device icon" style="width: 100%; height: auto;">
+                    </div>
+                </a>
+            {% endfor %}
+        {% endif %}
     </section>
 </div>
-
+</div>
 {% endblock %}

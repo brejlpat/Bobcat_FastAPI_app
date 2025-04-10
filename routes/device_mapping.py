@@ -3,6 +3,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 from opcua import Client, ua
+import requests
+from requests.auth import HTTPBasicAuth
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -10,7 +12,7 @@ templates = Jinja2Templates(directory="templates")
 # Stav připojení
 opc_client = None
 is_connected = False
-status_message = "❌ Nepřipojeno"
+status_message = "❌ Disconnected"
 
 
 @router.get("/lines", response_class=HTMLResponse)
@@ -48,10 +50,16 @@ async def connect_opcua(request: Request):
         opc_client.connect()
 
         is_connected = True
-        status_message = "✅ Připojeno"
+        status_message = "✅ Connected"
     except Exception as e:
         status_message = f"❌ Chyba připojení: {e}"
         is_connected = False
+
+    devices_dict = {}
+    if device_response.status_code == 200:
+        for d in device_response.json():
+            key = (d["servermain.CHANNEL_NAME"], d["common.ALLTYPES_NAME"])
+            devices_dict[key] = d
 
     opc_devices = []
     objects = opc_client.get_objects_node()
@@ -59,30 +67,24 @@ async def connect_opcua(request: Request):
 
     for ch in channels:
         ch_name = ch.get_browse_name().Name
-        if ch_name in ["PAINT_DBR_TEST", "PROD_DBR_TEST"]:
+        if ch_name[0] != "_" and ch_name != "Server":
             for dev in ch.get_children():
                 dev_name = dev.get_browse_name().Name
                 if dev_name[0] != "_":
-                    tags_list = []
-                    for tag in dev.get_children():
-                        tag_name = tag.get_browse_name().Name
-                        if tag_name[0] != "_":
-                            try:
-                                tag_value = tag.get_value()
-                            except:
-                                tag_value = "❌"
-                            tags_list.append({
-                                "name": tag_name,
-                                "value": tag_value
-                            })
                     opc_devices.append({
                         "channel": ch_name,
-                        "device": dev_name,
-                        "tags": tags_list
+                        "device": dev_name
                     })
 
     request.session["opc_devices"] = opc_devices
-    return RedirectResponse(url="/device_mapping/device", status_code=303)
+    request.session["is_connected"] = is_connected
+    request.session["status_message"] = status_message
+    return templates.TemplateResponse("device.html", {
+        "request": request,
+        "is_connected": is_connected,
+        "status_message": status_message,
+        "opc_devices": opc_devices
+    })
 
 
 @router.post("/disconnect_opcua")
@@ -96,10 +98,30 @@ async def disconnect_opcua():
     return RedirectResponse(url="/device_mapping/device", status_code=303)
 
 
+@router.get("/channel_setting", response_class=HTMLResponse)
+async def channel_setting(request: Request):
+    return templates.TemplateResponse("driver_setting.html", {"request": request})
+
+
 def get_is_connected():
     return is_connected
 
 
-@router.get("/channel_setting", response_class=HTMLResponse)
-async def channel_setting(request: Request):
-    return templates.TemplateResponse("driver_setting.html", {"request": request})
+@router.get("/device_details")
+async def device_details(request: Request):
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+    response = requests.get(url_id,
+                            auth=HTTPBasicAuth("test", "Kepserver_test1"),
+                            headers={"Content-Type": "application/json"}
+                            )
+    device_data = response.json()
+    if device_data:
+        device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+    return templates.TemplateResponse("device_details.html", {"request": request, "device_info": device_info})
