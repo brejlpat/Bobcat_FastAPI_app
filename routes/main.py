@@ -37,7 +37,7 @@ cur = conn.cursor(cursor_factory=DictCursor)
 @router.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
     if "user_id" not in request.session:
-        request.session["flash"] = {"message": "Login!", "category": "error"}
+        request.session["flash"] = {"message": "Please log in first!", "category": "error"}
         return RedirectResponse(url="/auth/login", status_code=302)
 
     cur.execute("SELECT COUNT(*) FROM users")

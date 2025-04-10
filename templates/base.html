@@ -8,6 +8,23 @@
     <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://kit.fontawesome.com/yourkit.js" crossorigin="anonymous"></script>
+    <style>
+        #bobcat-loader {
+            width: 100px;
+            height: 100px;
+            animation: spin 3s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min"></script>
 </head>
 <body>
 
@@ -35,13 +52,47 @@
         {% block content %}{% endblock %}
     </div>
 
+<div id="loader-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1000; justify-content:center; align-items:center;">
+    <img src="/static/images/logo.png" alt="Loading..." id="bobcat-loader">
+    <p style="padding: 10px;"></p>
+    <h2>Loading...</h2>
+</div>
+
+<script>
+        // Automatické skrytí flash zprávy po 3 vteřinách
+        setTimeout(() => {
+            const flash = document.getElementById("flash-message");
+            if (flash) {
+                flash.style.transition = "opacity 0.5s ease";
+                flash.style.opacity = 0;
+                setTimeout(() => flash.remove(), 500);
+            }
+        }, 3000);
+</script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const link = document.getElementById("device-mapping-link");
-        if (link && link.dataset.connected === "True") {
-            link.style.color = "#78de20";  // zelená
-            link.style.fontWeight = "bold";
-        }
+        // Formuláře – zobrazí loader při submitu
+        const forms = document.querySelectorAll("form");
+        forms.forEach(form => {
+            form.addEventListener("submit", function () {
+                const loader = document.getElementById("loader-overlay");
+                if (loader) {
+                    loader.style.display = "flex";
+                }
+            });
+        });
+
+        // Odkazy na device_details – zobrazí loader při kliknutí
+        const deviceLinks = document.querySelectorAll('a[href^="/device_mapping/device_details"]');
+        deviceLinks.forEach(link => {
+            link.addEventListener("click", function () {
+                const loader = document.getElementById("loader-overlay");
+                if (loader) {
+                    loader.style.display = "flex";
+                }
+            });
+        });
     });
 </script>
 

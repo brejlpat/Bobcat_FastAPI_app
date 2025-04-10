@@ -55,12 +55,6 @@ async def connect_opcua(request: Request):
         status_message = f"❌ Chyba připojení: {e}"
         is_connected = False
 
-    devices_dict = {}
-    if device_response.status_code == 200:
-        for d in device_response.json():
-            key = (d["servermain.CHANNEL_NAME"], d["common.ALLTYPES_NAME"])
-            devices_dict[key] = d
-
     opc_devices = []
     objects = opc_client.get_objects_node()
     channels = objects.get_children()

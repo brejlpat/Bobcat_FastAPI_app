@@ -7,7 +7,8 @@
     <div class="device-details">
         <h2>Channel: {{ device_info.channel }}</h2>
         <h3>Device: {{ device_info.device }}</h3>
-        <h3>IP address: {{ device_info.device.id }}</h3>
+        <h3>IP address: {{ device_info.device_id }}</h3>
+        <img src="/static/images/{{ device_info.device }}.png" alt="Device: {{ device_info.device }}" style="width: 100%; height: auto;">
     </div>
 
 </div>

@@ -8,6 +8,12 @@
     </section>
     <h1>OPC UA connection</h1>
     <p><strong>Status:</strong> {{ status_message }}</p>
+    {% if request.session.get("flash") %}
+                <ul class="flash-messages">
+                    <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
+                </ul>
+                {% set _ = request.session.pop("flash") %}
+    {% endif %}
 
     <!-- Centrování buttonu opravněně -->
     <div style="text-align: center; margin-bottom: 20px;">
@@ -19,20 +25,27 @@
     </div>
 
 
-<div id="opc-table">
-    <section style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; justify-items: center;">
-        {% if is_connected and opc_devices %}
-            {% for item in opc_devices %}
-                <a href="/device_mapping/device_details?channel={{ item.channel }}&device={{ item.device }}">
-                    <div style="border: 1px solid #ccc; padding: 10px; border-radius: 10px; text-align: center;">
-                        <h2>{{ item.channel }}</h2>
-                        <h3>Device:<br>{{ item.device }}</h3>
-                        <img src="/static/images/device.png" alt="Device icon" style="width: 100%; height: auto;">
-                    </div>
-                </a>
-            {% endfor %}
-        {% endif %}
-    </section>
+    <div id="opc-table">
+        <section style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; justify-items: center;">
+            {% if is_connected and opc_devices %}
+                {% for item in opc_devices %}
+                    <a href="/device_mapping/device_details?channel={{ item.channel }}&device={{ item.device }}">
+                        <div style="border: 1px solid #ccc; padding: 10px; border-radius: 10px; text-align: center;">
+                            <h2>{{ item.channel }}</h2>
+                            <h3>Device:<br>{{ item.device }}</h3>
+                            <img src="/static/images/{{ item.device }}.png" alt="Photo of {{ item.device }}" style="width: 100%; height: auto;">
+                        </div>
+                    </a>
+                {% endfor %}
+            {% endif %}
+        </section>
+    </div>
 </div>
+
+<div id="loader-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1000; justify-content:center; align-items:center;">
+    <img src="/static/images/logo.png" alt="Loading..." id="bobcat-loader">
+    <p style="padding: 10px;"></p>
+    <h2>Loading...</h2>
 </div>
+
 {% endblock %}

@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, UploadFile, File
 from fastapi.templating import Jinja2Templates
 import requests
 import json
+import os
+import shutil
 
 router = APIRouter()
 
@@ -68,7 +70,8 @@ async def create_OPC_UA_CLIENT_device(
         device_name: str = Form(...),
         channel_name: str = Form(...),
         driver: str = Form(...),
-        description: str = Form(...)
+        description: str = Form(...),
+        image: UploadFile = File(...)
 ):
     url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
 
@@ -76,6 +79,14 @@ async def create_OPC_UA_CLIENT_device(
     username = "test"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
+
+    # Uložení obrázku zařízení jako static/device_images/<device_name>.png
+    image_dir = "static/images"
+    os.makedirs(image_dir, exist_ok=True)
+    image_path = os.path.join(image_dir, f"{device_name}.png")
+
+    with open(image_path, "wb") as buffer:
+        shutil.copyfileobj(image.file, buffer)
 
     # JSON konfigurace pro OPC UA klienta s nastavením bezpečnosti
     payload = {
@@ -185,10 +196,6 @@ async def create_tag(
         data=json.dumps(payload),
         auth=(username, password)
     )
-
-    print("Request payload:", json.dumps(payload, indent=2))
-    print("Response:", response.status_code)
-    print("Response text:", response.text)
 
     # Výsledek
     if response.status_code == 201:
