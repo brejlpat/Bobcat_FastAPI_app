@@ -7,7 +7,8 @@
         <a href="/device_mapping/channel_setting"><button>Create device</button></a>
     </section>
     <h1>OPC UA connection</h1>
-    <p><strong>Status:</strong> {{ status_message }}</p>
+    <!-- <p><strong>Status:</strong> {{ status_message }}</p> -->
+
     {% if request.session.get("flash") %}
                 <ul class="flash-messages">
                     <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>

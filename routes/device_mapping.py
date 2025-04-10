@@ -5,6 +5,7 @@ from starlette.requests import Request
 from opcua import Client, ua
 import requests
 from requests.auth import HTTPBasicAuth
+import os
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -52,7 +53,7 @@ async def connect_opcua(request: Request):
         is_connected = True
         status_message = "✅ Connected"
     except Exception as e:
-        status_message = f"❌ Chyba připojení: {e}"
+        status_message = f"❌ Connection error: {e}"
         is_connected = False
 
     opc_devices = []
@@ -88,7 +89,7 @@ async def disconnect_opcua():
         opc_client.disconnect()
     opc_client = None
     is_connected = False
-    status_message = "❌ Odpojeno"
+    status_message = "❌ Disconnected"
     return RedirectResponse(url="/device_mapping/device", status_code=303)
 
 
@@ -118,4 +119,102 @@ async def device_details(request: Request):
         "device": device,
         "device_id": device_id
     }
-    return templates.TemplateResponse("device_details.html", {"request": request, "device_info": device_info})
+    status_message = "✅ Device details retrieved successfully."
+    return templates.TemplateResponse("device_details.html", {"request": request, "device_info": device_info, "status_message": status_message})
+
+
+@router.get("/delete_device")
+async def delete_device(request: Request):
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+    response = requests.delete(url_id,
+                               auth=HTTPBasicAuth("test", "Kepserver_test1"),
+                               headers={"Content-Type": "application/json"}
+                               )
+
+    image_path = f"static/images/{device}.png"
+    if os.path.exists(image_path):
+        os.remove(image_path)
+
+    if response.status_code == 200:
+        status_message = "Device deleted successfully."
+    else:
+        status_message = "Failed to delete device."
+    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message})
+
+
+@router.get("/show_tags")
+async def show_tags(request: Request):
+    global opc_client
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+
+    # Získání tagů přes REST API
+    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}/tags"
+    response = requests.get(
+        url_id,
+        auth=HTTPBasicAuth("test", "Kepserver_test1"),
+        headers={"Content-Type": "application/json"}
+    )
+
+    tags_with_values = []
+
+    if response.status_code == 200:
+        tags_data = response.json()
+
+        for tag in tags_data:
+            tag_name = tag.get("common.ALLTYPES_NAME", "❓")
+            tag_address = tag.get("servermain.TAG_ADDRESS")
+            tag_value = "❌"
+
+            if tag_address and opc_client:
+                node = opc_client.get_node(tag_address)
+                tag_value = node.get_value()
+
+            tags_with_values.append({
+                "name": tag_name,
+                "value": tag_value
+            })
+        print(tags_with_values)
+
+        status_message = "✅ Tags loaded successfully."
+    else:
+        status_message = f"❌ Error when loading tags: {response.status_code}"
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("device_details.html", {
+        "request": request,
+        "tags": tags_with_values,
+        "status_message": status_message,
+        "device_info": device_info
+    })
+
+
+@router.get("/cancel_tags")
+async def cancel_tags(request: Request):
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+
+    tags_with_values = []
+    status_message = "Tags cleared."
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("device_details.html", {
+        "request": request,
+        "tags": tags_with_values,
+        "status_message": status_message,
+        "device_info": device_info
+    })

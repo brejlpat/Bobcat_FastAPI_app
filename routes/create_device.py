@@ -15,7 +15,8 @@ async def channel(
         request: Request,
         driver: str = Form(...)
 ):
-    return templates.TemplateResponse("channel_setting.html", {"request": request, "driver": driver})
+    status_message = f"Driver {driver} selected!"
+    return templates.TemplateResponse("channel_setting.html", {"request": request, "driver": driver, "status_message": status_message})
 
 
 @router.post("/create_channel")
@@ -142,9 +143,9 @@ async def create_OPC_UA_CLIENT_device(
 
     # Výsledek
     if response.status_code == 201:
-        status_message = f"✅ Zařízení '{device_name}' bylo úspěšně vytvořeno v kanálu '{channel_name}'!"
+        status_message = f"✅ Device '{device_name}' was successfully created in channel '{channel_name}'!"
     else:
-        status_message = f"❌ Chyba při vytváření zařízení: {response.status_code}"
+        status_message = f"❌ Error when creating the device: {response.status_code}"
 
     return templates.TemplateResponse("tag_setting.html", {"request": request,
                                                            "status_message": status_message,

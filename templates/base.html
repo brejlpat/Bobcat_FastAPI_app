@@ -18,6 +18,28 @@
             from { transform: rotate(0deg); }
             to   { transform: rotate(360deg); }
         }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 50%;
+            transform: translateX(50%);
+            background-color: #4CAF50; /* zelená pro úspěch */
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-weight: bold;
+            animation: fadeOut 3s ease forwards;
+        }
+
+        /* animace pro automatické zmizení */
+        @keyframes fadeOut {
+            0%   { opacity: 1; }
+            80%  { opacity: 1; }
+            100% { opacity: 0; display: none; }
+        }
+
     </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -27,6 +49,11 @@
     <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min"></script>
 </head>
 <body>
+    {% if status_message %}
+        <div id="toast" class="toast">
+            {{ status_message }}
+        </div>
+    {% endif %}
 
     <!-- Navigační panel -->
     <nav class="navbar">
@@ -94,6 +121,16 @@
             });
         });
     });
+</script>
+
+<script>
+    // Skryj toast po 3 sekundách (záloha pro starší prohlížeče)
+    setTimeout(function() {
+        const toast = document.getElementById("toast");
+        if (toast) {
+            toast.style.display = "none";
+        }
+    }, 3000);
 </script>
 
 </body>
