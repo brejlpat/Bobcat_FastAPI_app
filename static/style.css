@@ -399,3 +399,15 @@ tr:hover {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
+
+.btn-back img {
+    width: 40px;
+    height: 40px;
+    margin-right: 5px;
+    vertical-align: middle;
+    transition: transform 0.2s;
+}
+
+.btn-back img:hover {
+    transform: scale(1.1);
+}

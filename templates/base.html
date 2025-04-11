@@ -99,24 +99,36 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Formuláře – zobrazí loader při submitu
-        const forms = document.querySelectorAll("form");
-        forms.forEach(form => {
-            form.addEventListener("submit", function () {
-                const loader = document.getElementById("loader-overlay");
-                if (loader) {
-                    loader.style.display = "flex";
+        const loader = document.getElementById("loader-overlay");
+
+        function showLoader(e) {
+            if (loader) {
+                loader.style.display = "flex";
+            }
+        }
+
+        // Všechny formuláře
+        document.querySelectorAll("form").forEach(form => {
+            form.addEventListener("submit", showLoader);
+        });
+
+        // Všechny odkazy, kromě těch co mají target="_blank" nebo href začíná #
+        document.querySelectorAll("a[href]").forEach(link => {
+            link.addEventListener("click", function (e) {
+                const href = link.getAttribute("href");
+                const target = link.getAttribute("target");
+                if (!href.startsWith("#") && target !== "_blank") {
+                    showLoader();
                 }
             });
         });
 
-        // Odkazy na device_details – zobrazí loader při kliknutí
-        const deviceLinks = document.querySelectorAll('a[href^="/device_mapping/device_details"]');
-        deviceLinks.forEach(link => {
-            link.addEventListener("click", function () {
-                const loader = document.getElementById("loader-overlay");
-                if (loader) {
-                    loader.style.display = "flex";
+        // Všechny tlačítka, co nejsou typu button (tedy submit/reset)
+        document.querySelectorAll("button").forEach(button => {
+            button.addEventListener("click", function (e) {
+                const type = button.getAttribute("type");
+                if (type === null || type === "submit") {
+                    showLoader();
                 }
             });
         });

@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.requests import Request
 from opcua import Client, ua
+from opcua.ua.uaerrors import UaError
 import requests
 from requests.auth import HTTPBasicAuth
 import os
@@ -144,44 +145,77 @@ async def delete_device(request: Request):
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message})
 
 
-@router.get("/show_tags")
+@router.get("/show_tags", response_class=HTMLResponse)
 async def show_tags(request: Request):
-    global opc_client
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
 
-    # Získání tagů přes REST API
-    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}/tags"
-    response = requests.get(
-        url_id,
-        auth=HTTPBasicAuth("test", "Kepserver_test1"),
-        headers={"Content-Type": "application/json"}
-    )
+    opc_url = "opc.tcp://pct-kepdev.corp.doosan.com:49320"
+    username = "test"
+    password = "Kepserver_test1"
+    use_security = True
 
     tags_with_values = []
+    status_message = ""
 
-    if response.status_code == 200:
-        tags_data = response.json()
+    try:
+        opc_client = Client(opc_url)
 
-        for tag in tags_data:
-            tag_name = tag.get("common.ALLTYPES_NAME", "❓")
-            tag_address = tag.get("servermain.TAG_ADDRESS")
-            tag_value = "❌"
+        if use_security:
+            opc_client.set_security_string(
+                "Basic256Sha256,SignAndEncrypt,certs/client_cert.der,certs/client_key.pem,certs/server_cert.der"
+            )
 
-            if tag_address and opc_client:
-                node = opc_client.get_node(tag_address)
-                tag_value = node.get_value()
+        opc_client.application_uri = "urn:FreeOpcUa:python:client"
+        opc_client.set_user(username)
+        opc_client.set_password(password)
+        opc_client.connect()
 
-            tags_with_values.append({
-                "name": tag_name,
-                "value": tag_value
-            })
-        print(tags_with_values)
+        root = opc_client.get_objects_node()
+        channels = root.get_children()
 
-        status_message = "✅ Tags loaded successfully."
-    else:
-        status_message = f"❌ Error when loading tags: {response.status_code}"
+        found_device = None
+
+        for ch in channels:
+            ch_name = ch.get_browse_name().Name
+            if ch_name != channel:
+                continue
+
+            devices = ch.get_children()
+            for dev in devices:
+                dev_name = dev.get_browse_name().Name
+                if dev_name == device:
+                    found_device = dev
+                    break
+
+        if not found_device:
+            status_message = f"❌ Device '{device}' in channel '{channel}' not found."
+        else:
+            tags = found_device.get_variables()
+            for tag in tags:
+                try:
+                    tag_name = tag.get_browse_name().Name
+                    tag_id = tag.nodeid.to_string()
+                    value = tag.get_value()
+                    tags_with_values.append({
+                        "name": tag_name,
+                        "nodeid": tag_id,
+                        "value": value
+                    })
+                except UaError as e:
+                    tags_with_values.append({
+                        "name": "❓",
+                        "nodeid": "❓",
+                        "value": f"⚠️ Error: {e}"
+                    })
+
+            status_message = "✅ OPC UA tags successfully loaded."
+
+        opc_client.disconnect()
+
+    except Exception as e:
+        status_message = f"❌ Exception: {e}"
 
     device_info = {
         "channel": channel,
@@ -192,8 +226,8 @@ async def show_tags(request: Request):
     return templates.TemplateResponse("device_details.html", {
         "request": request,
         "tags": tags_with_values,
-        "status_message": status_message,
-        "device_info": device_info
+        "device_info": device_info,
+        "status_message": status_message
     })
 
 
