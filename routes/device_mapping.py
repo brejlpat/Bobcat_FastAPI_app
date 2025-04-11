@@ -9,6 +9,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 import os
 import json
+import shutil
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -286,7 +287,7 @@ async def edit_device_get(request: Request):
         "request": request,
         "device_info": device_info,
         "payload": device_payload,
-        "project_id": project_id,
+        "project_id": project_id
     })
 
 
@@ -309,8 +310,8 @@ async def edit_device_post(request: Request):
     print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
     if new_name != old_name:
-        old_image_path = f"static/images/{old_name}/{old_name}.png"
-        new_dir = f"static/images/{new_name}"
+        old_image_path = f"static/images/{old_name}.png"
+        new_dir = f"static/images/"
         new_image_path = os.path.join(new_dir, f"{new_name}.png")
 
         # Přejmenovat obrázek i složku, pokud existuje
@@ -339,13 +340,13 @@ async def edit_device_post(request: Request):
 
     # Výstup
     if response.status_code == 200:
-        status_message = f"✅ Device was successfully edited!"
+        status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
     else:
         status_message = f"❌ Error while editing the device: {response.status_code}"
 
     device_info = {
         "channel": channel,
-        "device": device,
+        "device": new_name,
         "device_id": device_id
     }
 
