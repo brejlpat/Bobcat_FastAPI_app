@@ -411,3 +411,39 @@ tr:hover {
 .btn-back img:hover {
     transform: scale(1.1);
 }
+
+.form-section {
+    max-width: 800px;
+    margin: auto;
+    padding: 30px;
+    background-color: #f7f9fc;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #78de20;
+    box-shadow: 0 0 0 2px rgba(120, 222, 32, 0.3);
+}

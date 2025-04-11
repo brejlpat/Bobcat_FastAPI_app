@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.datastructures import FormData
 from starlette.requests import Request
 from opcua import Client, ua
 from opcua.ua.uaerrors import UaError
 import requests
 from requests.auth import HTTPBasicAuth
 import os
+import json
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -251,4 +253,104 @@ async def cancel_tags(request: Request):
         "tags": tags_with_values,
         "status_message": status_message,
         "device_info": device_info
+    })
+
+
+@router.get("/edit_device", response_class=HTMLResponse)
+async def edit_device_get(request: Request):
+    global device_payload
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+
+    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+    response = requests.get(
+        url,
+        auth=HTTPBasicAuth("test", "Kepserver_test1"),
+        headers={"Content-Type": "application/json"}
+    )
+
+    if response.status_code == 200:
+        device_payload = response.json()
+        project_id = device_payload.get("PROJECT_ID", "❌")
+    else:
+        device_payload = {}
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("edit_device.html", {
+        "request": request,
+        "device_info": device_info,
+        "payload": device_payload,
+        "project_id": project_id,
+    })
+
+
+@router.post("/edit_device")
+async def edit_device_post(request: Request):
+    global device_payload
+    form = await request.form()
+
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+    project_id = request.query_params.get("project_id")
+
+    payload = {
+        "PROJECT_ID": int(project_id),
+    }
+
+    new_name = str(form["common.ALLTYPES_NAME"])
+    old_name = str(device_payload["common.ALLTYPES_NAME"])
+    print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
+
+    if new_name != old_name:
+        old_image_path = f"static/images/{old_name}/{old_name}.png"
+        new_dir = f"static/images/{new_name}"
+        new_image_path = os.path.join(new_dir, f"{new_name}.png")
+
+        # Přejmenovat obrázek i složku, pokud existuje
+        if os.path.exists(old_image_path):
+            os.makedirs(new_dir, exist_ok=True)
+            shutil.move(old_image_path, new_image_path)
+            print(f"✅ Obrázek přejmenován na: {new_image_path}")
+
+    for key, form_value, payload_value in zip(device_payload.keys(), form.values(), device_payload.values()):
+        form_value_string = str(form_value)
+        payload_value_string = str(payload_value)
+        if form_value_string != payload_value_string:
+            payload[key] = form_value
+
+
+    # Endpoint pro úpravu channelu
+    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+
+    # Přihlašovací údaje
+    username = "test"
+    password = "Kepserver_test1"
+    headers = {"Content-Type": "application/json"}
+
+    # Odeslání požadavku na úpravu (PATCH = částečná změna)
+    response = requests.put(url, headers=headers, data=json.dumps(payload), auth=(username, password))
+
+    # Výstup
+    if response.status_code == 200:
+        status_message = f"✅ Device was successfully edited!"
+    else:
+        status_message = f"❌ Error while editing the device: {response.status_code}"
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("device_details.html", {
+        "request": request,
+        "device_info": device_info,
+        "status_message": status_message
     })
