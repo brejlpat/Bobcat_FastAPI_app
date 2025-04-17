@@ -12,6 +12,7 @@ router = APIRouter()
 
 templates = Jinja2Templates(directory="templates")
 
+"""
 # Načtení konfiguračního souboru
 config = configparser.ConfigParser()
 config.read("config.ini")
@@ -23,6 +24,7 @@ MSusername = db_config["MSusername"]
 MSpassword = db_config["MSpassword"]
 MSdriver = db_config["MSdriver"]
 MSconnection_string = f"mssql+pyodbc://{MSusername}:{MSpassword}@{MSserver}/{MSdatabase}?driver={MSdriver}"
+"""
 
 # Připojení k PostgreSQL
 conn = psycopg2.connect(
@@ -44,6 +46,7 @@ async def home(request: Request):
     cur.execute("SELECT COUNT(*) FROM users")
     users_amount = cur.fetchone()
 
+    """
     try:
         MSengine = create_engine(MSconnection_string)
         MSconnection = MSengine.connect()
@@ -64,11 +67,12 @@ async def home(request: Request):
     df = pd.DataFrame(result.fetchall(), columns=result.keys())
     df = df.fillna("N/A")
     data_list = df.to_dict(orient="records")
+    """
 
     return templates.TemplateResponse("home.html", {
         "request": request,
-        "title": "Domovská stránka",
-        "data_list": data_list,
+        "title": state.title,
+        #"data_list": data_list,
         "users_amount": users_amount,
         "is_connected": state.is_connected
     })

@@ -22,29 +22,40 @@ status_message = "❌ Disconnected"
 
 @router.get("/lines", response_class=HTMLResponse)
 async def devices(request: Request):
+    await disconnect_opcua()
+    state.title = "Device Mapping - Lines"
     return templates.TemplateResponse("device_mapping.html", {"request": request,
-                                                              "is_connected": state.is_connected})
+                                                              "is_connected": state.is_connected,
+                                                              "title": state.title})
 
 
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request):
     global status_message
-    line = request.query_params.get("line")
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+    else:
+        line = request.session["line"]
     opc_devices = request.session.get("opc_devices", [])
+    state.title = f"Device Mapping - {line}"
     return templates.TemplateResponse("device.html", {
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
         "opc_devices": opc_devices,
-        "line": line
+        "line": line,
+        "title": state.title
     })
 
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request):
     global opc_client, status_message
-    line = request.query_params.get("line")
-    line = str(line)
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+    else:
+        line = request.session["line"]
+    state.title = f"Device Mapping - {line}"
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -87,13 +98,16 @@ async def connect_opcua(request: Request):
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
-        "opc_devices": opc_devices
+        "opc_devices": opc_devices,
+        "title": state.title,
+        "line": line
     })
 
 
 @router.post("/disconnect_opcua")
 async def disconnect_opcua():
     global opc_client, status_message
+    state.title = f"Device Mapping - Lines"
     if opc_client:
         opc_client.disconnect()
     opc_client = None
@@ -104,7 +118,10 @@ async def disconnect_opcua():
 
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request):
-    return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected})
+    state.title = "Device Mapping - Driver Setting"
+    line = request.session.get("line")
+    return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected,
+                                                              "title": state.title, "line": line})
 
 
 def get_is_connected():
@@ -115,6 +132,8 @@ def get_is_connected():
 async def device_details(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
+    line = request.session.get("line")
+    state.title = f"{channel}"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(url_id,
                             auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
@@ -132,13 +151,16 @@ async def device_details(request: Request):
     return templates.TemplateResponse("device_details.html", {"request": request,
                                                               "device_info": device_info,
                                                               "status_message": status_message,
-                                                              "is_connected": state.is_connected})
+                                                              "is_connected": state.is_connected,
+                                                              "title": state.title,
+                                                              "line": line})
 
 
 @router.get("/delete_device")
 async def delete_device(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
+    state.title = f"Device Mapping - {request.session.get('line')} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
     response = requests.delete(url_id,
                                auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
@@ -154,7 +176,8 @@ async def delete_device(request: Request):
     else:
         status_message = "Failed to delete device."
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
-                                                      "is_connected": state.is_connected})
+                                                      "is_connected": state.is_connected,
+                                                      "title": state.title})
 
 
 @router.get("/show_tags", response_class=HTMLResponse)
@@ -319,7 +342,7 @@ async def edit_device_post(request: Request):
 
     new_name = str(form["common.ALLTYPES_NAME"])
     old_name = str(device_payload["common.ALLTYPES_NAME"])
-    print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
+    #print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
     for key, form_value, payload_value in zip(device_payload.keys(), form.values(), device_payload.values()):
         form_value_string = str(form_value)
@@ -420,7 +443,7 @@ async def edit_channel_post(request: Request):
         if os.path.exists(old_image_path):
             os.makedirs(new_dir, exist_ok=True)
             shutil.move(old_image_path, new_image_path)
-            print(f"✅ Obrázek přejmenován na: {new_image_path}")
+            #print(f"✅ Obrázek přejmenován na: {new_image_path}")
 
     # Porovnej hodnoty z formuláře s payloadem a přidej změněné klíče
     for key, form_value in form.items():
@@ -430,8 +453,8 @@ async def edit_channel_post(request: Request):
             if form_str != orig_str:
                 payload[key] = form_value
 
-    print("📦 Payload k odeslání:")
-    print(json.dumps(payload, indent=2))
+    #print("📦 Payload k odeslání:")
+    #print(json.dumps(payload, indent=2))
 
     # Odeslání PATCH požadavku
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
@@ -443,9 +466,9 @@ async def edit_channel_post(request: Request):
     )
 
     if response.status_code == 200:
-        status_message = "✅ Channel byl úspěšně upraven! Pro zobrazení změn se prosím znovu připojte."
+        status_message = "✅ Channel edited successfully!\nTo see the changes you need to disconnect and connect again."
     else:
-        status_message = f"❌ Chyba při úpravě channelu: {response.status_code}\n{response.text}"
+        status_message = f"❌ Error occured: {response.status_code}\n{response.text}"
 
     device_info = {
         "channel": new_name,
