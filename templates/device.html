@@ -18,7 +18,7 @@
 
     <!-- Centrování buttonu opravněně -->
     <div style="text-align: center; margin-bottom: 20px;">
-        <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}" style="display: inline-block;">
+        <form method="post" action="/device_mapping{{ '/disconnect_opcua' if is_connected else '/connect_opcua' }}?line={{ line }}" style="display: inline-block;">
             <button type="submit" style="width: 200px;">
                 {{ 'Disconnect' if is_connected else 'Connect' }}
             </button>
@@ -27,14 +27,14 @@
 
 
     <div id="opc-table">
-        <section style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; justify-items: center;">
+        <section style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; justify-items: center;">
             {% if is_connected and opc_devices %}
                 {% for item in opc_devices %}
                     <a href="/device_mapping/device_details?channel={{ item.channel }}&device={{ item.device }}">
                         <div style="border: 1px solid #ccc; padding: 10px; border-radius: 10px; text-align: center;">
                             <h2>{{ item.channel }}</h2>
                             <h3>Device:<br>{{ item.device }}</h3>
-                            <img src="/static/images/{{ item.device }}.png" alt="Photo of {{ item.device }}" style="width: 100%; height: auto;">
+                            <img src="/static/images/DEVICES/{{ item.channel }}.png" alt="Photo of {{ item.channel }}" style="width: 20vw; height: auto;">
                         </div>
                     </a>
                 {% endfor %}

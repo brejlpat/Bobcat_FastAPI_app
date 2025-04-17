@@ -29,18 +29,22 @@ async def devices(request: Request):
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request):
     global status_message
+    line = request.query_params.get("line")
     opc_devices = request.session.get("opc_devices", [])
     return templates.TemplateResponse("device.html", {
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
-        "opc_devices": opc_devices
+        "opc_devices": opc_devices,
+        "line": line
     })
 
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request):
     global opc_client, status_message
+    line = request.query_params.get("line")
+    line = str(line)
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -67,7 +71,7 @@ async def connect_opcua(request: Request):
 
     for ch in channels:
         ch_name = ch.get_browse_name().Name
-        if ch_name[0] != "_" and ch_name != "Server" and "MEX" in ch_name:
+        if ch_name[0] != "_" and ch_name != "Server" and line in ch_name:
             for dev in ch.get_children():
                 dev_name = dev.get_browse_name().Name
                 if dev_name[0] != "_":
@@ -95,7 +99,7 @@ async def disconnect_opcua():
     opc_client = None
     state.is_connected = False
     status_message = "❌ Disconnected"
-    return RedirectResponse(url="/device_mapping/device", status_code=303)
+    return RedirectResponse(url="/device_mapping/lines", status_code=303)
 
 
 @router.get("/channel_setting", response_class=HTMLResponse)
@@ -141,7 +145,7 @@ async def delete_device(request: Request):
                                headers={"Content-Type": "application/json"}
                                )
 
-    image_path = f"static/images/{device}.png"
+    image_path = f"static/images/DEVICES/{device}.png"
     if os.path.exists(image_path):
         os.remove(image_path)
 
@@ -317,23 +321,11 @@ async def edit_device_post(request: Request):
     old_name = str(device_payload["common.ALLTYPES_NAME"])
     print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
-    if new_name != old_name:
-        old_image_path = f"static/images/{old_name}.png"
-        new_dir = f"static/images/"
-        new_image_path = os.path.join(new_dir, f"{new_name}.png")
-
-        # Přejmenovat obrázek i složku, pokud existuje
-        if os.path.exists(old_image_path):
-            os.makedirs(new_dir, exist_ok=True)
-            shutil.move(old_image_path, new_image_path)
-            print(f"✅ Obrázek přejmenován na: {new_image_path}")
-
     for key, form_value, payload_value in zip(device_payload.keys(), form.values(), device_payload.values()):
         form_value_string = str(form_value)
         payload_value_string = str(payload_value)
         if form_value_string != payload_value_string:
             payload[key] = form_value
-
 
     # Endpoint pro úpravu channelu
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
@@ -355,6 +347,109 @@ async def edit_device_post(request: Request):
     device_info = {
         "channel": channel,
         "device": new_name,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("device_details.html", {
+        "request": request,
+        "device_info": device_info,
+        "status_message": status_message,
+        "is_connected": state.is_connected
+    })
+
+
+@router.get("/edit_channel", response_class=HTMLResponse)
+async def edit_channel_get(request: Request):
+    global channel_payload
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+    response = requests.get(
+        url,
+        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
+        headers={"Content-Type": "application/json"}
+    )
+
+    project_id = "❌"
+    if response.status_code == 200:
+        channel_payload = response.json()
+        project_id = channel_payload.get("PROJECT_ID", "❌")
+    else:
+        channel_payload = {}
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    return templates.TemplateResponse("edit_channel.html", {
+        "request": request,
+        "device_info": device_info,
+        "payload": channel_payload,
+        "project_id": project_id,
+        "is_connected": state.is_connected
+    })
+
+
+@router.post("/edit_channel")
+async def edit_channel_post(request: Request):
+    global channel_payload
+    form = await request.form()
+
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+    project_id = request.query_params.get("project_id")
+
+    payload = {
+        "PROJECT_ID": int(project_id)
+    }
+
+    new_name = str(form["common.ALLTYPES_NAME"])
+    old_name = str(channel_payload.get("common.ALLTYPES_NAME", ""))
+
+    # Přejmenování obrázku, pokud se změnil název
+    if new_name != old_name:
+        old_image_path = f"static/images/DEVICES/{old_name}.png"
+        new_dir = f"static/images/DEVICES"
+        new_image_path = os.path.join(new_dir, f"{new_name}.png")
+
+        if os.path.exists(old_image_path):
+            os.makedirs(new_dir, exist_ok=True)
+            shutil.move(old_image_path, new_image_path)
+            print(f"✅ Obrázek přejmenován na: {new_image_path}")
+
+    # Porovnej hodnoty z formuláře s payloadem a přidej změněné klíče
+    for key, form_value in form.items():
+        if key in channel_payload:
+            form_str = str(form_value)
+            orig_str = str(channel_payload[key])
+            if form_str != orig_str:
+                payload[key] = form_value
+
+    print("📦 Payload k odeslání:")
+    print(json.dumps(payload, indent=2))
+
+    # Odeslání PATCH požadavku
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+    response = requests.put(
+        url,
+        headers={"Content-Type": "application/json"},
+        data=json.dumps(payload),
+        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1")
+    )
+
+    if response.status_code == 200:
+        status_message = "✅ Channel byl úspěšně upraven! Pro zobrazení změn se prosím znovu připojte."
+    else:
+        status_message = f"❌ Chyba při úpravě channelu: {response.status_code}\n{response.text}"
+
+    device_info = {
+        "channel": new_name,
+        "device": device,
         "device_id": device_id
     }
 

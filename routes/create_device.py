@@ -82,9 +82,9 @@ async def create_OPC_UA_CLIENT_device(
     headers = {"Content-Type": "application/json"}
 
     # Uložení obrázku zařízení jako static/device_images/<device_name>.png
-    image_dir = "static/images"
+    image_dir = "static/images/DEVICES"
     os.makedirs(image_dir, exist_ok=True)
-    image_path = os.path.join(image_dir, f"{device_name}.png")
+    image_path = os.path.join(image_dir, f"{channel_name}.png")
 
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
