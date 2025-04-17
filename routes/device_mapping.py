@@ -34,8 +34,10 @@ async def device(request: Request):
     global status_message
     if request.query_params.get("line"):
         line = request.query_params.get("line")
+        request.session["line"] = line  # <-- tady se to musí uložit
     else:
-        line = request.session["line"]
+        line = request.session.get("line", "❌")
+
     opc_devices = request.session.get("opc_devices", [])
     state.title = f"Device Mapping - {line}"
     return templates.TemplateResponse("device.html", {
@@ -53,8 +55,10 @@ async def connect_opcua(request: Request):
     global opc_client, status_message
     if request.query_params.get("line"):
         line = request.query_params.get("line")
+        request.session["line"] = line  # <-- tady se to musí uložit
     else:
-        line = request.session["line"]
+        line = request.session.get("line", "❌")
+
     state.title = f"Device Mapping - {line}"
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
@@ -119,7 +123,12 @@ async def disconnect_opcua():
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request):
     state.title = "Device Mapping - Driver Setting"
-    line = request.session.get("line")
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+        request.session["line"] = line  # <-- tady se to musí uložit
+    else:
+        line = request.session.get("line", "❌")
+
     return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected,
                                                               "title": state.title, "line": line})
 
@@ -132,7 +141,12 @@ def get_is_connected():
 async def device_details(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
-    line = request.session.get("line")
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+        request.session["line"] = line  # <-- tady se to musí uložit
+    else:
+        line = request.session.get("line", "❌")
+
     state.title = f"{channel}"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(url_id,
@@ -185,6 +199,11 @@ async def show_tags(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+        request.session["line"] = line
+    else:
+        line = request.session.get("line", "❌")
 
     opc_url = "opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320"
     username = "DBR_Automation"
@@ -263,7 +282,8 @@ async def show_tags(request: Request):
         "tags": tags_with_values,
         "device_info": device_info,
         "status_message": status_message,
-        "is_connected": state.is_connected
+        "is_connected": state.is_connected,
+        "line": line
     })
 
 

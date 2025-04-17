@@ -12,7 +12,12 @@
             <a href="#"><img src="/static/images/bobcat_logo.png" alt="Doosan Bobcat" class="logo"></a>
             <a href="/automation/dashboard">Automation</a>
             <a href="#">CNC Machine</a>
-            <a href="/device_mapping/lines">Device Mapping {% if is_connected %}🟢{% else %}⚫{% endif %}</a>
+            <a href="/device_mapping/lines">Device Mapping</a>
+            {% if is_connected %}
+            <a href="/device_mapping/device" data-connected="{{ is_connected }}, {{ line }}">
+                {{ line }} 🟢
+            </a>
+            {% endif %}
         </div>
         <div class="nav-right">
             <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">

@@ -10,6 +10,12 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+        request.session["line"] = line  # <-- tady se to musí uložit
+    else:
+        line = request.session.get("line", "❌")
+
     team_members = [
         {"name": "Cyrille Piteau", "position": "Automation & Digitalisation senior manager EMEA", "image": "user_icon.png"},
         {"name": "Bořek Miklas", "position": "ME Engineer - Smart Factory", "image": "user_icon.png"},
@@ -18,4 +24,4 @@ async def dashboard(request: Request):
         {"name": "Patrik Brejla", "position": "Trainee Automation", "image": "user_icon.png"},
     ]
     return templates.TemplateResponse("automation.html", {"request": request, "team_members": team_members,
-                                                          "is_connected": state.is_connected})
+                                                          "is_connected": state.is_connected, "line": line})

@@ -19,7 +19,11 @@
             <a href="/device_mapping/device_details?channel={{ device_info.channel }}&device={{ device_info.device }}" class="btn-admin">Refresh</a>
         </div>
         <p style="padding: 10px"> </p>
-        <img src="/static/images/DEVICES/{{ device_info.channel }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
+        {% if line == "Laser" %}
+            <img src="/static/images/DEVICES/{{ device_info.device }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
+        {% else %}
+            <img src="/static/images/DEVICES/{{ device_info.channel }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
+        {% endif %}
 
         {% if tags %}
             <h2>Tag list:</h2>

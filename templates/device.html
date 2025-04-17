@@ -9,7 +9,8 @@
     <section>
         <a href="/device_mapping/channel_setting"><button>Create device</button></a>
     </section>
-    <h1>OPC UA connection</h1>
+    <h1>{{ line }}</h1>
+    <h2>KEPserverEX</h2>
     <!-- <p><strong>Status:</strong> {{ status_message }}</p> -->
 
     {% if request.session.get("flash") %}
@@ -37,7 +38,11 @@
                         <div style="border: 1px solid #ccc; padding: 10px; border-radius: 10px; text-align: center;">
                             <h2>{{ item.channel }}</h2>
                             <h3>Device:<br>{{ item.device }}</h3>
-                            <img src="/static/images/DEVICES/{{ item.channel }}.png" alt="Photo of {{ item.channel }}" style="width: 20vw; height: auto;">
+                            {% if line == "Laser" %}
+                                <img src="/static/images/DEVICES/{{ item.device }}.png" alt="Channel: {{ item.channel }}" style="width: 20vw; height: auto;">
+                            {% else %}
+                                <img src="/static/images/DEVICES/{{ item.channel }}.png" alt="Channel: {{ item.channel }}" style="width: 20vw; height: auto;">
+                            {% endif %}
                         </div>
                     </a>
                 {% endfor %}

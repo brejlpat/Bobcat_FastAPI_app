@@ -39,10 +39,14 @@ cur = conn.cursor(cursor_factory=DictCursor)
 
 @router.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
+    state.title = "Home Page"
     if "user_id" not in request.session:
         request.session["flash"] = {"message": "Please log in first!", "category": "error"}
         return RedirectResponse(url="/auth/login", status_code=302)
-
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+    else:
+        line = request.session["line"]
     cur.execute("SELECT COUNT(*) FROM users")
     users_amount = cur.fetchone()
 
@@ -74,5 +78,6 @@ async def home(request: Request):
         "title": state.title,
         #"data_list": data_list,
         "users_amount": users_amount,
-        "is_connected": state.is_connected
+        "is_connected": state.is_connected,
+        "line": line
     })

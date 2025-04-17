@@ -64,6 +64,7 @@ header {
     border-radius: 10px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     text-align: center;
+    min-width: 400px;
 }
 
 h1 {
@@ -446,4 +447,45 @@ tr:hover {
     outline: none;
     border-color: #78de20;
     box-shadow: 0 0 0 2px rgba(120, 222, 32, 0.3);
+}
+
+/* kontejner s odkazy */
+.device-links {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;               /* mezera mezi buňkami, uprav podle potřeby */
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;          /* vycentrování celého bloku */
+  max-width: 1200px;       /* nebo jakoukoliv šířku potřebuješ */
+}
+
+/* jednotlivé odkazy / položky */
+.device-links a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.5rem;
+  transition: transform .2s;
+}
+
+.device-links a:hover {
+  transform: translateY(-3px);
+}
+
+/* obrázek uvnitř odkazu */
+.device-links a img {
+  width: 100px;             /* velikost ikonky */
+  height: 100px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+/* text pod ikonou */
+.device-links a p {
+  margin: 0;
+  font-size: 0.9rem;
+  text-align: center;
 }
