@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from app_state import state
 
 router = APIRouter()
 
@@ -16,4 +17,5 @@ async def dashboard(request: Request):
         {"name": "Zdeněk Křížek", "position": "Technologist", "image": "user_icon.png"},
         {"name": "Patrik Brejla", "position": "Trainee Automation", "image": "user_icon.png"},
     ]
-    return templates.TemplateResponse("automation.html", {"request": request, "team_members": team_members})
+    return templates.TemplateResponse("automation.html", {"request": request, "team_members": team_members,
+                                                          "is_connected": state.is_connected})

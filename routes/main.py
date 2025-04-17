@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, text
 import pandas as pd
 import psycopg2
 from psycopg2.extras import DictCursor
+from app_state import state
 
 router = APIRouter()
 
@@ -53,7 +54,8 @@ async def home(request: Request):
             "request": request,
             "title": "Domovská stránka",
             "data_list": [],
-            "users_amount": users_amount
+            "users_amount": users_amount,
+            "is_connected": state.is_connected
         })
 
     query = text("SELECT TOP 10 * FROM dbo.HJ_Visual_plan3")
@@ -67,5 +69,6 @@ async def home(request: Request):
         "request": request,
         "title": "Domovská stránka",
         "data_list": data_list,
-        "users_amount": users_amount
+        "users_amount": users_amount,
+        "is_connected": state.is_connected
     })

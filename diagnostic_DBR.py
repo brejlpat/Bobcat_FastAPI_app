@@ -2,17 +2,17 @@ from opcua import Client, ua
 from opcua.ua import uaerrors
 import time
 
-client = Client("opc.tcp://pct-kepdev.corp.doosan.com:49320")
+client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
 client.set_security_string(
     "Basic256Sha256,SignAndEncrypt,"
-    "certs/client_cert.der,"
-    "certs/client_key.pem,"
-    "certs/server_cert.der"
+    "certs_dbr/client_cert.der,"
+    "certs_dbr/client_key.pem,"
+    "certs_dbr/server_cert.der"
 )
 
 client.application_uri = "urn:FreeOpcUa:python:client"
 
-client.set_user("test")
+client.set_user("DBR_Automation")
 client.set_password("Kepserver_test1")
 
 for ep in client.connect_and_get_server_endpoints():

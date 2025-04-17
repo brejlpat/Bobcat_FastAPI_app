@@ -28,10 +28,10 @@ async def create_channel(
         description: str = Form("")
 ):
     # KEPServerEX REST API endpoint
-    url = "http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels"
+    url = "http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels"
 
     # Přihlášení
-    username = "test"
+    username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
 
@@ -74,10 +74,10 @@ async def create_OPC_UA_CLIENT_device(
         description: str = Form(...),
         image: UploadFile = File(...)
 ):
-    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
 
     # Přihlašovací údaje pro REST API Kepware
-    username = "test"
+    username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
 
@@ -162,10 +162,10 @@ async def create_tag(
         tag_data_type: int = Form(...),
         description: str = Form(...)
 ):
-    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices/{device_name}/tags"
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices/{device_name}/tags"
 
     # Přihlašovací údaje pro REST API Kepware
-    username = "test"
+    username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
 

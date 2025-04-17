@@ -10,28 +10,29 @@ from requests.auth import HTTPBasicAuth
 import os
 import json
 import shutil
+from app_state import state
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 # Stav připojení
 opc_client = None
-is_connected = False
 status_message = "❌ Disconnected"
 
 
 @router.get("/lines", response_class=HTMLResponse)
 async def devices(request: Request):
-    return templates.TemplateResponse("device_mapping.html", {"request": request})
+    return templates.TemplateResponse("device_mapping.html", {"request": request,
+                                                              "is_connected": state.is_connected})
 
 
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request):
-    global is_connected, status_message
+    global status_message
     opc_devices = request.session.get("opc_devices", [])
     return templates.TemplateResponse("device.html", {
         "request": request,
-        "is_connected": is_connected,
+        "is_connected": state.is_connected,
         "status_message": status_message,
         "opc_devices": opc_devices
     })
@@ -39,26 +40,26 @@ async def device(request: Request):
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request):
-    global opc_client, is_connected, status_message
+    global opc_client, status_message
     try:
-        opc_client = Client("opc.tcp://pct-kepdev.corp.doosan.com:49320")
+        opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
             "Basic256Sha256,SignAndEncrypt,"
-            "certs/client_cert.der,"
-            "certs/client_key.pem,"
-            "certs/server_cert.der"
+            "certs_dbr/client_cert.der,"
+            "certs_dbr/client_key.pem,"
+            "certs_dbr/server_cert.der"
         )
 
         opc_client.application_uri = "urn:FreeOpcUa:python:client"
-        opc_client.set_user("test")
+        opc_client.set_user("DBR_Automation")
         opc_client.set_password("Kepserver_test1")
         opc_client.connect()
 
-        is_connected = True
+        state.is_connected = True
         status_message = "✅ Connected"
     except Exception as e:
         status_message = f"❌ Connection error: {e}"
-        is_connected = False
+        state.is_connected = False
 
     opc_devices = []
     objects = opc_client.get_objects_node()
@@ -66,7 +67,7 @@ async def connect_opcua(request: Request):
 
     for ch in channels:
         ch_name = ch.get_browse_name().Name
-        if ch_name[0] != "_" and ch_name != "Server":
+        if ch_name[0] != "_" and ch_name != "Server" and "MEX" in ch_name:
             for dev in ch.get_children():
                 dev_name = dev.get_browse_name().Name
                 if dev_name[0] != "_":
@@ -76,11 +77,11 @@ async def connect_opcua(request: Request):
                     })
 
     request.session["opc_devices"] = opc_devices
-    request.session["is_connected"] = is_connected
+    request.session["is_connected"] = state.is_connected
     request.session["status_message"] = status_message
     return templates.TemplateResponse("device.html", {
         "request": request,
-        "is_connected": is_connected,
+        "is_connected": state.is_connected,
         "status_message": status_message,
         "opc_devices": opc_devices
     })
@@ -88,31 +89,31 @@ async def connect_opcua(request: Request):
 
 @router.post("/disconnect_opcua")
 async def disconnect_opcua():
-    global opc_client, is_connected, status_message
+    global opc_client, status_message
     if opc_client:
         opc_client.disconnect()
     opc_client = None
-    is_connected = False
+    state.is_connected = False
     status_message = "❌ Disconnected"
     return RedirectResponse(url="/device_mapping/device", status_code=303)
 
 
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request):
-    return templates.TemplateResponse("driver_setting.html", {"request": request})
+    return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected})
 
 
 def get_is_connected():
-    return is_connected
+    return state.is_connected
 
 
 @router.get("/device_details")
 async def device_details(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
-    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+    url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(url_id,
-                            auth=HTTPBasicAuth("test", "Kepserver_test1"),
+                            auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
                             headers={"Content-Type": "application/json"}
                             )
     device_data = response.json()
@@ -124,16 +125,19 @@ async def device_details(request: Request):
         "device_id": device_id
     }
     status_message = "✅ Device details retrieved successfully."
-    return templates.TemplateResponse("device_details.html", {"request": request, "device_info": device_info, "status_message": status_message})
+    return templates.TemplateResponse("device_details.html", {"request": request,
+                                                              "device_info": device_info,
+                                                              "status_message": status_message,
+                                                              "is_connected": state.is_connected})
 
 
 @router.get("/delete_device")
 async def delete_device(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
-    url_id = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+    url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
     response = requests.delete(url_id,
-                               auth=HTTPBasicAuth("test", "Kepserver_test1"),
+                               auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
                                headers={"Content-Type": "application/json"}
                                )
 
@@ -145,7 +149,8 @@ async def delete_device(request: Request):
         status_message = "Device deleted successfully."
     else:
         status_message = "Failed to delete device."
-    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message})
+    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
+                                                      "is_connected": state.is_connected})
 
 
 @router.get("/show_tags", response_class=HTMLResponse)
@@ -154,8 +159,8 @@ async def show_tags(request: Request):
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
 
-    opc_url = "opc.tcp://pct-kepdev.corp.doosan.com:49320"
-    username = "test"
+    opc_url = "opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320"
+    username = "DBR_Automation"
     password = "Kepserver_test1"
     use_security = True
 
@@ -167,7 +172,7 @@ async def show_tags(request: Request):
 
         if use_security:
             opc_client.set_security_string(
-                "Basic256Sha256,SignAndEncrypt,certs/client_cert.der,certs/client_key.pem,certs/server_cert.der"
+                "Basic256Sha256,SignAndEncrypt,certs_dbr/client_cert.der,certs_dbr/client_key.pem,certs_dbr/server_cert.der"
             )
 
         opc_client.application_uri = "urn:FreeOpcUa:python:client"
@@ -230,7 +235,8 @@ async def show_tags(request: Request):
         "request": request,
         "tags": tags_with_values,
         "device_info": device_info,
-        "status_message": status_message
+        "status_message": status_message,
+        "is_connected": state.is_connected
     })
 
 
@@ -253,7 +259,8 @@ async def cancel_tags(request: Request):
         "request": request,
         "tags": tags_with_values,
         "status_message": status_message,
-        "device_info": device_info
+        "device_info": device_info,
+        "is_connected": state.is_connected
     })
 
 
@@ -264,10 +271,10 @@ async def edit_device_get(request: Request):
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
 
-    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(
         url,
-        auth=HTTPBasicAuth("test", "Kepserver_test1"),
+        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
         headers={"Content-Type": "application/json"}
     )
 
@@ -287,7 +294,8 @@ async def edit_device_get(request: Request):
         "request": request,
         "device_info": device_info,
         "payload": device_payload,
-        "project_id": project_id
+        "project_id": project_id,
+        "is_connected": state.is_connected
     })
 
 
@@ -328,10 +336,10 @@ async def edit_device_post(request: Request):
 
 
     # Endpoint pro úpravu channelu
-    url = f"http://pct-kepdev.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
+    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
 
     # Přihlašovací údaje
-    username = "test"
+    username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
 
@@ -353,5 +361,6 @@ async def edit_device_post(request: Request):
     return templates.TemplateResponse("device_details.html", {
         "request": request,
         "device_info": device_info,
-        "status_message": status_message
+        "status_message": status_message,
+        "is_connected": state.is_connected
     })
