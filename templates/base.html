@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
-    <link rel="stylesheet" href="/static/style.css">
-    <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="../static/style.css">
+    <link rel="shortcut icon" href="../static/images/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://kit.fontawesome.com/yourkit.js" crossorigin="anonymous"></script>
     <style>
@@ -40,6 +40,48 @@
             100% { opacity: 0; display: none; }
         }
 
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #popup.show {
+            display: block;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 400px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #close-popup {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #444;
+        }
+
+        #close-popup:hover {
+            color: #000;
+        }
     </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -64,6 +106,7 @@
             <a href="/device_mapping/lines" id="device-mapping-link" data-connected="{{ is_connected }}">
                 Device Mapping
             </a>
+
             {% if is_connected %}
             <a href="/device_mapping/device?line={{ line }}">
                 → {{ line }} 🟢
@@ -74,7 +117,7 @@
             <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">
             <span class="username">{{ request.session["username"] }}</span>
             {% if request.session["role"] == "admin" %}
-                <a href="/admin/accounts" class="btn-admin">Account management</a>
+                <a href="/admin/users" class="btn-admin">Ant</a>
             {% endif %}
             <a href="/auth/logout" class="btn-logout">Logout</a>
         </div>

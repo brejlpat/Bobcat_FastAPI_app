@@ -24,9 +24,11 @@ status_message = "❌ Disconnected"
 async def devices(request: Request):
     await disconnect_opcua()
     state.title = "Device Mapping - Lines"
+
     return templates.TemplateResponse("device_mapping.html", {"request": request,
                                                               "is_connected": state.is_connected,
-                                                              "title": state.title})
+                                                              "title": state.title
+                                                              })
 
 
 @router.get("/device", response_class=HTMLResponse)

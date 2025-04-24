@@ -7,6 +7,8 @@ import pandas as pd
 import psycopg2
 from psycopg2.extras import DictCursor
 from app_state import state
+from opcua import Client
+import requests
 
 router = APIRouter()
 
@@ -72,7 +74,6 @@ async def home(request: Request):
     df = df.fillna("N/A")
     data_list = df.to_dict(orient="records")
     """
-
     return templates.TemplateResponse("home.html", {
         "request": request,
         "title": state.title,
@@ -80,4 +81,77 @@ async def home(request: Request):
         "users_amount": users_amount,
         "is_connected": state.is_connected,
         "line": line
+    })
+
+
+@router.get("/plant_status", response_class=HTMLResponse)
+async def plant_status(request: Request):
+    state.title = "Plant Status Overview"
+
+    try:
+        opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
+        opc_client.set_security_string(
+            "Basic256Sha256,SignAndEncrypt,"
+            "certs_dbr/client_cert.der,"
+            "certs_dbr/client_key.pem,"
+            "certs_dbr/server_cert.der"
+        )
+
+        opc_client.application_uri = "urn:FreeOpcUa:python:client"
+        opc_client.set_user("DBR_Automation")
+        opc_client.set_password("Kepserver_test1")
+        opc_client.connect()
+
+        state.is_connected = True
+        status_message = "✅ Connected"
+    except Exception as e:
+        status_message = f"❌ Connection error: {e}"
+        state.is_connected = False
+
+    root = opc_client.get_objects_node()
+    channels = root.get_children()
+    tags_with_values = []
+
+    for ch in channels:
+        ch_name = ch.get_browse_name().Name
+        if ch_name == "DBR_SITE_LINE_STATUS":
+            devices = ch.get_children()
+            for dev in devices:
+                dev_name = dev.get_browse_name().Name
+                if dev_name == "Line_Status":
+                    for subfolder in dev.get_children():
+                        if subfolder.get_browse_name().Name == "line_status":
+                            line_status_tags = subfolder.get_variables()
+                            for tag in line_status_tags:
+                                try:
+                                    tag_name = tag.get_browse_name().Name
+                                    tag_id = tag.nodeid.to_string()
+                                    value = tag.get_value()
+                                    tags_with_values.append({
+                                        "name": tag_name,
+                                        "nodeid": tag_id,
+                                        "value": value
+                                    })
+                                except UaError as e:
+                                    tags_with_values.append({
+                                        "name": "❓",
+                                        "nodeid": "❓",
+                                        "value": f"⚠️ Error: {e}"
+                                    })
+
+    status_message = "✅ OPC UA tags successfully loaded."
+    #print(tags_with_values)
+    if opc_client:
+        opc_client.disconnect()
+        line = None
+        state.is_connected = False
+        request.session["line"] = line
+        status_message = f"Line: {state.line} - OPC UA client disconnected."
+    return templates.TemplateResponse("plant_status.html", {
+        "request": request,
+        "title": state.title,
+        "status_message": status_message,
+        "tags": tags_with_values,
+        "line": line,
+        "is_connected": state.is_connected
     })
