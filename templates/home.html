@@ -18,46 +18,7 @@
                     <p class="stat-number">{{ users_amount }}</p>
                 </div>
                 {% endif %}
-
             </div>
-                <!--
-            <div class="database">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Datum</th>
-                            <th>Line</th>
-                            <th>Planned Day</th>
-                            <th>Shifts</th>
-                            <th>Produced</th>
-                            <th>Difference</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for data in data_list %}
-                        <tr>
-                            <td>{{ data['ID'] }}</td>
-                            <td>{{ data['Datum'] }}</td>
-                            <td>{{ data['Line'] }}</td>
-                            <td>{{ data['PlannDay'] }}</td>
-                            <td>{{ data['Shifts'] }}</td>
-                            <td>{{ data['Produced'] if data['Produced'] != 'N/A' else 'N/A' }}</td>
-                            <td>{{ data['Difference'] if data['Difference'] != 'N/A' else 'N/A' }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            -->
         </div>
-
-
-        <div class="news-section">
-            <h2>News</h2>
-            <p>📢 Admins now can edit account management!</p>
-            <p>⚙️ We´ve updated the CNC machine section</p>
-            <p>🔔 There was a fried cheese today in the canteen!</p>
-        </div>
-    </div>
+</div>
 {% endblock %}

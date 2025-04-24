@@ -8,95 +8,6 @@
     <link rel="shortcut icon" href="../static/images/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://kit.fontawesome.com/yourkit.js" crossorigin="anonymous"></script>
-    <style>
-        #bobcat-loader {
-            width: 100px;
-            height: 100px;
-            animation: spin 3s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 50%;
-            transform: translateX(50%);
-            background-color: #333; /* zelená pro úspěch */
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            z-index: 9999;
-            font-weight: bold;
-            animation: fadeOut 3s ease forwards;
-        }
-
-        /* animace pro automatické zmizení */
-        @keyframes fadeOut {
-            0%   { opacity: 1; }
-            80%  { opacity: 1; }
-            100% { opacity: 0; display: none; }
-        }
-
-        #popup {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100;
-            background: #333;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.6);
-            color: #fff;
-        }
-
-        .popup-content {
-            background: transparent;
-            padding: 2rem;
-            border-radius: 12px;
-            width: 400px;
-            text-align: center;
-        }
-
-        #popup h3, #popup p {
-            color: #fff;
-        }
-
-        #popup strong {
-            color: white; /* světle zelená pro status */
-        }
-
-        #close-popup {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            font-size: 1.8rem;
-            font-weight: bold;
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #f44336;
-        }
-
-        #close-popup:hover {
-            color: #ff0000;
-        }
-
-        #popup.show {
-            animation: fadeInScale 0.3s ease forwards;
-            display: block;
-        }
-
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: translate(-50%, -50%) scale(0.1); }
-            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-    </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -116,7 +27,6 @@
         <div class="nav-left">
             <a href="/main/home"><img src="/static/images/bobcat_logo.png" alt="Doosan Bobcat" class="logo"></a>
             <a href="/automation/dashboard">Automation</a>
-            <a href="#">CNC Machine</a>
             <a href="/device_mapping/lines" id="device-mapping-link" data-connected="{{ is_connected }}">
                 Device Mapping
             </a>
@@ -128,12 +38,18 @@
             {% endif %}
         </div>
         <div class="nav-right">
-            <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">
-            <span class="username">{{ request.session["username"] }}</span>
-            {% if request.session["role"] == "admin" %}
-                <a href="/admin/users" class="btn-admin">Ant</a>
-            {% endif %}
-            <a href="/auth/logout" class="btn-logout">Logout</a>
+            <div class="user-menu">
+                <button id="user-toggle" type="button">
+                    <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">
+                    <span class="username">{{ request.session["username"] }}</span>
+                </button>
+                <div id="dropdown-menu" class="dropdown-hidden">
+                    {% if request.session["role"] == "admin" %}
+                        <a href="/admin/users" class="btn-admin">Account Management</a>
+                    {% endif %}
+                    <a href="/auth/logout" class="btn-logout">Logout</a>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -141,22 +57,22 @@
         {% block content %}{% endblock %}
     </div>
 
-<div id="loader-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1000; justify-content:center; align-items:center;">
-    <img src="/static/images/logo.png" alt="Loading..." id="bobcat-loader">
-    <p style="padding: 10px;"></p>
-    <h2>Loading...</h2>
-</div>
+    <div id="loader-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:1000; justify-content:center; align-items:center;">
+        <img src="/static/images/logo.png" alt="Loading..." id="bobcat-loader">
+        <p style="padding: 10px;"></p>
+        <h2>Loading...</h2>
+    </div>
 
 <script>
-        // Automatické skrytí flash zprávy po 3 vteřinách
-        setTimeout(() => {
-            const flash = document.getElementById("flash-message");
-            if (flash) {
-                flash.style.transition = "opacity 0.5s ease";
-                flash.style.opacity = 0;
-                setTimeout(() => flash.remove(), 500);
-            }
-        }, 3000);
+    // Automatické skrytí flash zprávy po 3 vteřinách
+    setTimeout(() => {
+        const flash = document.getElementById("flash-message");
+        if (flash) {
+            flash.style.transition = "opacity 0.5s ease";
+            flash.style.opacity = 0;
+            setTimeout(() => flash.remove(), 500);
+        }
+    }, 3000);
 </script>
 
 <script>
@@ -174,9 +90,9 @@
             form.addEventListener("submit", showLoader);
         });
 
-        // Všechny odkazy, kromě těch co mají target="_blank" nebo href začíná #
+        // Odkazy kromě target _blank nebo href #
         document.querySelectorAll("a[href]").forEach(link => {
-            link.addEventListener("click", function (e) {
+            link.addEventListener("click", function () {
                 const href = link.getAttribute("href");
                 const target = link.getAttribute("target");
                 if (!href.startsWith("#") && target !== "_blank") {
@@ -187,7 +103,7 @@
 
         // Všechny tlačítka, co nejsou typu button (tedy submit/reset)
         document.querySelectorAll("button").forEach(button => {
-            button.addEventListener("click", function (e) {
+            button.addEventListener("click", function () {
                 const type = button.getAttribute("type");
                 if (type === null || type === "submit") {
                     showLoader();
@@ -198,7 +114,7 @@
 </script>
 
 <script>
-    // Skryj toast po 3 sekundách (záloha pro starší prohlížeče)
+    // Záloha skrytí toastu
     setTimeout(function() {
         const toast = document.getElementById("toast");
         if (toast) {
@@ -207,5 +123,23 @@
     }, 3000);
 </script>
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const toggle = document.getElementById("user-toggle");
+        const menu = document.getElementById("dropdown-menu");
+
+        toggle.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            menu.classList.toggle("dropdown-visible");
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!toggle.contains(event.target) && !menu.contains(event.target)) {
+                menu.classList.remove("dropdown-visible");
+            }
+        });
+    });
+</script>
 </body>
 </html>

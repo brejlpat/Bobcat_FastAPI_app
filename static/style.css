@@ -245,7 +245,7 @@ tr:hover {
 
 /* Hlavní obsah */
 .content {
-    display: flex;
+    display: grid;
     justify-content: space-around;
     align-items: flex-start;
     padding: 20px;
@@ -254,7 +254,8 @@ tr:hover {
 /* Ikony s odkazy */
 .icon-links {
     display: flex;
-    flex-direction: column;
+    gap: 20px;
+    flex-direction: row;
     align-items: center;
 }
 
@@ -488,4 +489,227 @@ tr:hover {
   margin: 0;
   font-size: 0.9rem;
   text-align: center;
+}
+
+/* Původní styly zachovány, přidány pouze media queries pro responzivitu */
+
+@media screen and (max-width: 1200px) {
+  .device-links {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .charts-section, .stats-section {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .device-links {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .content {
+    flex-direction: column;
+    align-items: center;
+  }
+  .nav-left a, .nav-right a {
+    font-size: 14px;
+    margin: 0 10px;
+  }
+  .username {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .device-links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .nav-left, .nav-right {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .nav-left a, .nav-right a {
+    margin: 5px 0;
+  }
+  .container, .stat-card, .news-section {
+    min-width: unset;
+    width: 90%;
+  }
+  .team-card, .chart-placeholder {
+    width: 90%;
+  }
+  .logo {
+    height: 30px;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .device-links {
+    grid-template-columns: 1fr;
+  }
+  .nav-left a, .nav-right a {
+    font-size: 12px;
+  }
+  .user-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .btn-admin, .btn-logout {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+/* Původní styly zachovány, přidány responsivní popup styly z base.html */
+
+#bobcat-loader {
+    width: 100px;
+    height: 100px;
+    animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 50%;
+    transform: translateX(50%);
+    background-color: #333;
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    z-index: 9999;
+    font-weight: bold;
+    animation: fadeOut 3s ease forwards;
+}
+
+@keyframes fadeOut {
+    0%   { opacity: 1; }
+    80%  { opacity: 1; }
+    100% { opacity: 0; display: none; }
+}
+
+#popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background: #333;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+    color: #fff;
+}
+
+.popup-content {
+    background: transparent;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 400px;
+    text-align: center;
+}
+
+#popup h3, #popup p {
+    color: #fff;
+}
+
+#popup strong {
+    color: white;
+}
+
+#close-popup {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.8rem;
+    font-weight: bold;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #f44336;
+}
+
+#close-popup:hover {
+    color: #ff0000;
+}
+
+#popup.show {
+    animation: fadeInScale 0.3s ease forwards;
+    display: block;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.1); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Responsivita popupu a toastu */
+@media screen and (max-width: 600px) {
+    .popup-content {
+        width: 90%;
+        padding: 1.2rem;
+    }
+    #popup strong {
+        display: block;
+        font-size: 1.1rem;
+    }
+    .toast {
+        width: 90%;
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+}
+
+.user-menu {
+    position: relative;
+}
+
+#user-toggle {
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    gap: 0.5rem;
+}
+
+#dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #000;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    display: none;
+    flex-direction: column;
+    min-width: 180px;
+    z-index: 1000;
+}
+
+#dropdown-menu a {
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    display: block;
+}
+
+#dropdown-menu a:hover {
+    background-color: #FF4A00;
+}
+
+.dropdown-visible {
+    display: flex !important;
 }
