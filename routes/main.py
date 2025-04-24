@@ -132,25 +132,19 @@ async def plant_status(request: Request):
                                         "nodeid": tag_id,
                                         "value": value
                                     })
-                                except UaError as e:
+                                except Exception as e:
                                     tags_with_values.append({
                                         "name": "❓",
                                         "nodeid": "❓",
                                         "value": f"⚠️ Error: {e}"
                                     })
 
-    status_message = "✅ OPC UA tags successfully loaded."
-    #print(tags_with_values)
-    if opc_client:
-        opc_client.disconnect()
-        line = None
-        state.is_connected = False
-        request.session["line"] = line
-        status_message = f"Line: {state.line} - OPC UA client disconnected."
+    line = None
+    state.is_connected = False
+    request.session["line"] = line
     return templates.TemplateResponse("plant_status.html", {
         "request": request,
         "title": state.title,
-        "status_message": status_message,
         "tags": tags_with_values,
         "line": line,
         "is_connected": state.is_connected

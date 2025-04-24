@@ -47,41 +47,55 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 100;
-            background: white;
-            padding: 1rem;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        #popup.show {
-            display: block;
+            background: #333;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+            color: #fff;
         }
 
         .popup-content {
-            background: white;
+            background: transparent;
             padding: 2rem;
-            border-radius: 10px;
+            border-radius: 12px;
             width: 400px;
-            position: relative;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #popup h3, #popup p {
+            color: #fff;
+        }
+
+        #popup strong {
+            color: white; /* světle zelená pro status */
         }
 
         #close-popup {
             position: absolute;
             top: 0.5rem;
             right: 0.5rem;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: bold;
             background: none;
             border: none;
             cursor: pointer;
-            color: #444;
+            color: #f44336;
         }
 
         #close-popup:hover {
-            color: #000;
+            color: #ff0000;
         }
+
+        #popup.show {
+            animation: fadeInScale 0.3s ease forwards;
+            display: block;
+        }
+
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.1); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
     </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

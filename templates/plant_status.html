@@ -9,82 +9,72 @@
 </section>
 
 <!-- Modal (popup) -->
-<div id="popup">
+<div id="popup" class="popup">
   <div class="popup-content">
-    <button id="close-popup">&times;</button> <!-- ← Tady je ten křížek -->
-    <h2 id="popup-title"></h2>
-    <p id="popup-content"></p>
+    <span id="close-popup" class="popup-close">&times;</span>
+    <h3>Status linky: <span id="popup-line"></span></h3>
+    <p>Status: <strong id="popup-status"></strong></p>
   </div>
 </div>
 
+<!-- Pop-up window -->
 <script>
   document.getElementById("svg-plant").addEventListener("load", function () {
     const svgDoc = this.contentDocument;
+    const statusData = {{ tags | tojson }};
 
-    // Data z Pythonu převedená do JSON formátu
-    const tags = {{ tags | tojson }};
-
-    // Převod do mapy: { "Blade_Mex": "RUNNING", ... }
-    const statusMap = {};
-    tags.forEach(tag => {
-      statusMap[tag.name] = tag.value;
-    });
-
-    const statusColors = {
-      RUNNING: "#4CAF50",     // zelená
-      IDLE: "#2196F3",        // modrá
-      MAINTENANCE: "#9E9E9E", // šedá
-    };
-
-    for (const [id, status] of Object.entries(statusMap)) {
-      const group = svgDoc.getElementById(id);
-      if (group) {
-        const rect = group.querySelector("rect");
-        if (rect) {
-          rect.style.fill = statusColors[status] || statusColors.UNKNOWN;
-        }
-      }
-    }
-  });
-</script>
-
-<script>
-  document.getElementById("svg-plant").addEventListener("load", function () {
-    const svgDoc = this.contentDocument;
-
-    const tags = {{ tags | tojson }};
-    const statusMap = {};
-    tags.forEach(tag => {
-      statusMap[tag.name] = tag.value;
-    });
+    const popup = document.getElementById("popup");
+    const popupLine = document.getElementById("popup-line");
+    const popupStatus = document.getElementById("popup-status");
 
     const statusColors = {
       RUNNING: "#4CAF50",
       IDLE: "#2196F3",
-      MAINTENANCE: "#9E9E9E",
+      MAINTENANCE: "#9E9E9E"
     };
 
-    for (const [id, status] of Object.entries(statusMap)) {
-      const group = svgDoc.getElementById(id);
+    function showPopup(lineName, status) {
+      const normalized = ["RUNNING", "IDLE", "MAINTENANCE"].includes(status) ? status : "ERROR";
+      popupLine.textContent = lineName;
+      popupStatus.textContent = normalized;
+      popup.classList.add("show");
+    }
+
+    document.getElementById("close-popup").addEventListener("click", (event) => {
+      event.stopPropagation();
+      popup.classList.remove("show");
+    });
+
+    statusData.forEach(({ name, value }) => {
+      const group = svgDoc.getElementById(name);
       if (group) {
         const rect = group.querySelector("rect");
         if (rect) {
-          rect.style.fill = statusColors[status] || statusColors.UNKNOWN;
+          if (value === "RUNNING" || value === "IDLE" || value === "MAINTENANCE") {
+            rect.style.fill = statusColors[value];
+          } else {
+            rect.style.fill = "#f44336"; // ERROR – červená
+          }
+
+          rect.style.cursor = "pointer";
+          rect.addEventListener("mouseenter", () => {
+            rect.style.stroke = "#ff0000";
+            rect.style.strokeWidth = "2";
+          });
+          rect.addEventListener("mouseleave", () => {
+            rect.style.stroke = "none";
+          });
         }
 
-        group.style.cursor = "pointer";
-        group.addEventListener("click", () => {
-          document.getElementById("popup-title").innerText = `Detail linky: ${id}`;
-          document.getElementById("popup-content").innerText = `Status: ${status}`;
-          document.getElementById("popup").classList.add("show");
+        group.addEventListener("click", (e) => {
+          e.preventDefault();
+          showPopup(name, value);
         });
       }
-    }
-
-    document.getElementById("close-popup").addEventListener("click", () => {
-      document.getElementById("popup").classList.remove("show");
     });
   });
 </script>
+
+
 
 {% endblock %}
