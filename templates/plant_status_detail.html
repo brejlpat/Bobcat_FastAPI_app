@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
     <section class="plant-map-section">
-        <h1>Plant Line Status Map</h1>
+        <h1>Detail of {{ line }} line</h1>
 
         <div class="legend">
             <h2>Legend:</h2>
@@ -44,7 +44,7 @@
 
     function showPopup(lineName) {
       popupLine.textContent = lineName;
-      popupStatus.textContent = lineName;
+      popupStatus.textContent = "ruining";
       popup.classList.add("show");
       popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}&status="ok"`;
       popupButton.textContent = `Go to ${lineName}`;
@@ -82,14 +82,6 @@
       });
     });
   });
-</script>
-
-
-<script>
-  // Automatické obnovení stránky každou minutu (60 000 ms)
-  setInterval(function () {
-    window.location.reload();
-  }, 60000);
 </script>
 
 {% endblock %}

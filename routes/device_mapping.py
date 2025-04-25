@@ -149,6 +149,9 @@ async def device_details(request: Request):
     else:
         line = request.session.get("line", "❌")
 
+    if not device:
+        pass
+
     state.title = f"{channel}"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(url_id,

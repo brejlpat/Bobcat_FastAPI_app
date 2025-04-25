@@ -164,5 +164,5 @@ async def line_detail(request: Request):
     return templates.TemplateResponse("plant_status_detail.html", {
         "request": request,
         "title": state.title,
-        "line": line
+        "line": line,
     })

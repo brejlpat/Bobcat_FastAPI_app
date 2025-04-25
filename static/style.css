@@ -4,7 +4,11 @@ body, html {
     padding: 0;
     height: 100%;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #888;
+    background-image: url('images/bg2.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 header {
@@ -15,7 +19,7 @@ header {
 
 .body {
     font-family: Arial, sans-serif;
-    background-color: #d4d4d4;
+    /*background-color: #d4d4d4;*/
     margin: 0;
     padding: 0;
     display: flex;
