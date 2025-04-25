@@ -689,27 +689,155 @@ tr:hover {
     position: absolute;
     right: 0;
     top: 100%;
-    background-color: #000;
+    background-color: #131e29;
     padding: 10px;
-    border-radius: 5px;
+    border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    display: none;
+    display: flex;
     flex-direction: column;
-    min-width: 180px;
+    min-width: 200px;
     z-index: 1000;
-}
-
-#dropdown-menu a {
-    color: white;
-    padding: 8px;
-    text-decoration: none;
-    display: block;
-}
-
-#dropdown-menu a:hover {
-    background-color: #FF4A00;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .dropdown-visible {
-    display: flex !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-btn {
+    background-color: transparent;
+    color: white;
+    padding: 10px 15px;
+    text-align: left;
+    text-decoration: none;
+    border: none;
+    width: 100%;
+    transition: background 0.2s, transform 0.2s;
+    border-radius: 8px;
+    font-weight: bold;
+    display: block;
+    box-sizing: border-box;
+}
+
+.dropdown-btn:hover {
+    color: #FF4A00;
+    transform: translateX(3px);
+    border-radius: 8px;
+}
+
+/* Dynamický navbar pro mobil */
+.navbar-mobile {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.navbar-mobile .nav-left,
+.navbar-mobile .nav-right {
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.navbar-mobile .nav-left a,
+.navbar-mobile .nav-right a,
+.navbar-mobile .username {
+    margin: 5px 10px;
+}
+
+/* --- Styly z device.html přesunuté do CSS --- */
+
+.btn-back img {
+  width: 40px;
+  height: 40px;
+  margin-right: 5px;
+  vertical-align: middle;
+  transition: transform 0.2s;
+}
+
+.btn-back img:hover {
+  transform: scale(1.1);
+}
+
+#opc-table section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  justify-items: center;
+}
+
+#opc-table a {
+  text-decoration: none;
+  color: inherit;
+}
+
+#opc-table a div {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  transition: box-shadow 0.2s;
+  background-color: white;
+}
+
+#opc-table a div:hover {
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+}
+
+#opc-table img {
+  width: 20vw;
+  height: auto;
+  border-radius: 5px;
+}
+
+/* Responsivita pro menší obrazovky */
+@media screen and (max-width: 1024px) {
+  #opc-table section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #opc-table img {
+    width: 25vw;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #opc-table section {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-back img {
+    width: 30px;
+    height: 30px;
+  }
+
+  #opc-table a div h2, #opc-table a div h3 {
+    font-size: 16px;
+  }
+
+  #opc-table img {
+    width: 60vw;
+  }
+}
+
+/* Přidáno pro centrální button */
+#opc-table form button {
+  width: 200px;
+  margin: 0 auto;
+  display: block;
 }

@@ -27,9 +27,11 @@
         <div class="nav-left">
             <a href="/main/home"><img src="/static/images/bobcat_logo.png" alt="Doosan Bobcat" class="logo"></a>
             <a href="/automation/dashboard">Automation</a>
+            <a href="#">CNC Machine</a>
             <a href="/device_mapping/lines" id="device-mapping-link" data-connected="{{ is_connected }}">
                 Device Mapping
             </a>
+            <a href="/main/plant_status">Plant Status</a>
 
             {% if is_connected %}
             <a href="/device_mapping/device?line={{ line }}">
@@ -45,9 +47,9 @@
                 </button>
                 <div id="dropdown-menu" class="dropdown-hidden">
                     {% if request.session["role"] == "admin" %}
-                        <a href="/admin/users" class="btn-admin">Account Management</a>
+                        <a href="/admin/users" class="dropdown-btn">Account Management</a>
                     {% endif %}
-                    <a href="/auth/logout" class="btn-logout">Logout</a>
+                    <a href="/auth/logout" class="dropdown-btn">Logout</a>
                 </div>
             </div>
         </div>
@@ -123,6 +125,7 @@
     }, 3000);
 </script>
 
+    <!-- Hamburger menu -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const toggle = document.getElementById("user-toggle");
@@ -139,6 +142,19 @@
                 menu.classList.remove("dropdown-visible");
             }
         });
+
+        // Dynamické přizpůsobení navbaru při změně velikosti okna
+        function adjustNavbar() {
+            const nav = document.querySelector('.navbar');
+            if (window.innerWidth <= 600) {
+                nav.classList.add('navbar-mobile');
+            } else {
+                nav.classList.remove('navbar-mobile');
+            }
+        }
+
+        window.addEventListener("resize", adjustNavbar);
+        adjustNavbar();
     });
 </script>
 </body>
