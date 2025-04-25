@@ -176,6 +176,7 @@ async def device_details(request: Request):
 async def delete_device(request: Request):
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
+
     state.title = f"Device Mapping - {request.session.get('line')} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
     response = requests.delete(url_id,
@@ -193,7 +194,9 @@ async def delete_device(request: Request):
         status_message = "Failed to delete device."
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
                                                       "is_connected": state.is_connected,
-                                                      "title": state.title})
+                                                      "title": state.title,
+                                                      "line": request.session["line"]
+                                                      })
 
 
 @router.get("/show_tags", response_class=HTMLResponse)

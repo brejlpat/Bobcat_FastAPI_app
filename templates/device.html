@@ -31,7 +31,6 @@
 
 
     <div id="opc-table">
-        <section>
             {% if is_connected and opc_devices %}
                 {% for item in opc_devices %}
                     <a href="/device_mapping/device_details?channel={{ item.channel }}&device={{ item.device }}">
@@ -39,15 +38,14 @@
                             <h2>{{ item.channel }}</h2>
                             <h3>Device:<br>{{ item.device }}</h3>
                             {% if line == "Laser" %}
-                                <img src="/static/images/DEVICES/{{ item.device }}.png" alt="Channel: {{ item.channel }}" style="width: 25vw; height: auto;">
+                                <img src="/static/images/DEVICES/{{ item.device }}.png" alt="Channel: {{ item.channel }}">
                             {% else %}
-                                <img src="/static/images/DEVICES/{{ item.channel }}.png" alt="Channel: {{ item.channel }}" style="width: 25vw; height: auto;">
+                                <img src="/static/images/DEVICES/{{ item.channel }}.png" alt="Channel: {{ item.channel }}">
                             {% endif %}
                         </div>
                     </a>
                 {% endfor %}
             {% endif %}
-        </section>
     </div>
 </div>
 

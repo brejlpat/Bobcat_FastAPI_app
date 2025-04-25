@@ -15,8 +15,9 @@ async def channel(
         request: Request,
         driver: str = Form(...)
 ):
-    status_message = f"Driver {driver} selected!"
-    return templates.TemplateResponse("channel_setting.html", {"request": request, "driver": driver, "status_message": status_message})
+    status_message = f"You´ve selected driver: {driver}"
+    return templates.TemplateResponse("channel_setting.html",
+                                      {"request": request, "driver": driver, "status_message": status_message})
 
 
 @router.post("/create_channel")
@@ -147,10 +148,11 @@ async def create_OPC_UA_CLIENT_device(
     else:
         status_message = f"❌ Error when creating the device: {response.status_code}"
 
-    return templates.TemplateResponse("tag_setting.html", {"request": request,
-                                                           "status_message": status_message,
-                                                           "device_name": device_name,
-                                                           "channel_name": channel_name})
+    return templates.TemplateResponse("device.html", {"request": request,
+                                                      "status_message": status_message,
+                                                      "device_name": device_name,
+                                                      "channel_name": channel_name,
+                                                      "line": request.session["line"]})
 
 
 @router.post("/create_tag")
@@ -204,4 +206,5 @@ async def create_tag(
     else:
         status_message = f"Failed to create the tag: {response.status_code}"
 
-    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message})
+    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
+                                                      "line": request.session["line"]})

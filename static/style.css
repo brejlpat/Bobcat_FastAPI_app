@@ -267,8 +267,8 @@ tr:hover {
 }
 
 .icon-links img {
-    width: 150px;
-    height: 150px;
+    width: 11vw ;
+    height: auto;
     transition: transform 0.3s ease;
 }
 
@@ -478,8 +478,8 @@ tr:hover {
 
 /* obrázek uvnitř odkazu */
 .device-links a img {
-  width: 100px;             /* velikost ikonky */
-  height: 100px;
+  width: 150px;             /* velikost ikonky */
+  height: 150px;
   object-fit: contain;
   margin-bottom: 0.5rem;
 }
@@ -774,10 +774,10 @@ tr:hover {
   transform: scale(1.1);
 }
 
-#opc-table section {
+#opc-table {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 10px;
   justify-items: center;
 }
 
@@ -800,38 +800,31 @@ tr:hover {
 }
 
 #opc-table img {
-  width: 20vw;
+  width: 95%;
   height: auto;
   border-radius: 5px;
 }
 
 /* Responsivita pro menší obrazovky */
-@media screen and (max-width: 1024px) {
-  #opc-table section {
+@media screen and (max-width: 1250px) {
+  #opc-table {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  #opc-table img {
-    width: 25vw;
   }
 }
 
-@media screen and (max-width: 600px) {
-  #opc-table section {
-    grid-template-columns: 1fr;
+@media screen and (max-width: 960px) {
+  #opc-table {
+    grid-template-columns: repeat(1, 1fr);
   }
+}
 
-  .btn-back img {
-    width: 30px;
-    height: 30px;
+@media screen and (max-width: 560px) {
+  #opc-table {
+    grid-template-columns: repeat(1, 1fr);
   }
 
   #opc-table a div h2, #opc-table a div h3 {
     font-size: 16px;
-  }
-
-  #opc-table img {
-    width: 60vw;
   }
 }
 
@@ -840,4 +833,73 @@ tr:hover {
   width: 200px;
   margin: 0 auto;
   display: block;
+}
+
+/* Legenda pro plant status map */
+.plant-map-section {
+  display: grid;
+  gap: 20px;
+  text-align: center;
+}
+
+.plant-map-section h1 {
+    font-size: 24px;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.legend ul {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: inline-block;
+  background-color: currentColor;
+}
+
+.legend-color.running {
+  background-color: #4CAF50;
+}
+
+.legend-color.idle {
+  background-color: #2196F3;
+}
+
+.legend-color.maintenance {
+  background-color: #9E9E9E;
+}
+
+.legend-color.error {
+  background-color: #f44336;
+}
+
+@media screen and (max-width: 600px) {
+  .legend ul {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .legend li {
+    font-size: 13px;
+  }
 }
