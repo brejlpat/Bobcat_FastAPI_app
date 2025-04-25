@@ -18,13 +18,14 @@
         <a href="/device_mapping/device?line=Laser"><img src="../static/images/Laser-icon.png" alt=""><p>Laser</p></a>
     </div>
     <div style="margin-top: 30px; text-align: center;">
-      <input id="line-search-input" type="text" placeholder="Enter line name..." style="padding: 8px; width: 250px;">
+      <input id="line-search-input" type="text" placeholder="Enter a keyword..." style="padding: 8px; width: 250px;">
       <button onclick="searchLine()" style="padding: 8px;">Search</button>
     </div>
 
 </section>
 
 <script>
+// Funkce pro vyhledávání zařízení podle názvu linky
 function searchLine() {
   let input = document.getElementById("line-search-input").value.trim();
   if (input !== "") {

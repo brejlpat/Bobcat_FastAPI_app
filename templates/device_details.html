@@ -50,9 +50,11 @@
 </div>
 
 <script>
+    // Funkce pro potvrzení smazání zařízení
   function confirmDelete(channel, device) {
     const userInput = prompt("Type 'Confirm' to delete the device:");
 
+    // Kontrola, zda uživatel zadal správný text
     if (userInput === "Confirm") {
       // Přesměrování na delete_device
       window.location.href = `/device_mapping/delete_device?channel=${encodeURIComponent(channel)}&device=${encodeURIComponent(device)}`;

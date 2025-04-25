@@ -161,13 +161,7 @@ async def line_detail(request: Request):
         line = request.session["line"]
     request.session["line"] = line
 
-    if line == "Mex":
-        line = ["MEX", "MX"]
-    elif line == "SSL":
-        line = ["SSL", "LDR"]
-
-
-    return templates.TemplateResponse("line_detail.html", {
+    return templates.TemplateResponse("plant_status_detail.html", {
         "request": request,
         "title": state.title,
         "line": line

@@ -1,35 +1,36 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="plant-map-section">
-    <h1>Plant Line Status Map</h1>
+<div class="container">
+    <section class="plant-map-section">
+        <h1>Plant Line Status Map</h1>
 
-    <div class="legend">
-        <h2>Legend:</h2>
-        <ul>
-            <li><span class="legend-color running"></span>RUNNING</li>
-            <li><span class="legend-color idle"></span>IDLE</li>
-            <li><span class="legend-color maintenance"></span>MAINTENANCE</li>
-            <li><span class="legend-color error"></span>ERROR</li>
-        </ul>
+        <div class="legend">
+            <h2>Legend:</h2>
+            <ul>
+                <li><span class="legend-color running"></span>RUNNING</li>
+                <li><span class="legend-color idle"></span>IDLE</li>
+                <li><span class="legend-color maintenance"></span>MAINTENANCE</li>
+                <li><span class="legend-color error"></span>ERROR</li>
+            </ul>
+        </div>
+
+        <div class="svg-wrapper">
+            <object id="svg-plant" type="image/svg+xml" data="../static/svg/plant_plan.svg" width="100%" height="auto"></object>
+        </div>
+    </section>
+
+
+    <!-- Modal (popup) -->
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <span id="close-popup" class="popup-close">&times;</span>
+        <h3>Line status: <span id="popup-line"></span></h3>
+        <p>Status: <strong id="popup-status"></strong></p>
+        <a id="popup-link" href="#"><button id="popup-link-btn">Go to device</button></a>
+      </div>
     </div>
-
-    <div class="svg-wrapper">
-        <object id="svg-plant" type="image/svg+xml" data="../static/svg/plant_plan.svg" width="100%" height="auto"></object>
-    </div>
-</section>
-
-
-<!-- Modal (popup) -->
-<div id="popup" class="popup">
-  <div class="popup-content">
-    <span id="close-popup" class="popup-close">&times;</span>
-    <h3>Line status: <span id="popup-line"></span></h3>
-    <p>Status: <strong id="popup-status"></strong></p>
-    <a id="popup-link" href="#"><button id="popup-link-btn">Go to device</button></a>
-  </div>
 </div>
-
 <!-- Pop-up window -->
 <script>
   document.getElementById("svg-plant").addEventListener("load", function () {
@@ -52,7 +53,7 @@
       popupStatus.textContent = normalized;
       popup.classList.add("show");
       const popupLink = document.getElementById("popup-link");
-      popupLink.href = `/main/plant_status_detail?line=${encodeURIComponent(lineName)}`;
+      popupLink.href = `/main/line_detail?line=${encodeURIComponent(lineName)}`;
 
       const popupButton = document.getElementById("popup-link-btn");
       popupButton.textContent = `Go to ${lineName}`;
