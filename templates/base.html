@@ -80,8 +80,18 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const loader = document.getElementById("loader-overlay");
+        let isHistoryNavigation = false;
+
+        // Detekce tlačítka zpět (nechceme zobrazovat loader)
+        window.addEventListener('popstate', () => {
+            isHistoryNavigation = true;
+        });
 
         function showLoader(e) {
+            if (isHistoryNavigation) {
+                isHistoryNavigation = false; // reset
+                return;
+            }
             if (loader) {
                 loader.style.display = "flex";
             }
@@ -103,7 +113,7 @@
             });
         });
 
-        // Všechny tlačítka, co nejsou typu button (tedy submit/reset)
+        // Tlačítka bez specifikovaného typu nebo s typem submit
         document.querySelectorAll("button").forEach(button => {
             button.addEventListener("click", function () {
                 const type = button.getAttribute("type");

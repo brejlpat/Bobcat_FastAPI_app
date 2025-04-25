@@ -101,7 +101,7 @@ button:hover {
 }
 
 .role_button {
-    background-color: black;
+    background-color: #E14A10;
     color: white;
     border: none;
     padding: 10px;
@@ -114,7 +114,8 @@ button:hover {
 
 .role_button:hover {
     transform: scale(1.05);
-    background-color: #333;
+    background-color: #555;
+    color: white;
 }
 
 .role_buttons {
@@ -695,7 +696,7 @@ tr:hover {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
-    min-width: 200px;
+    min-width: 250px;
     z-index: 1000;
     opacity: 0;
     transform: translateY(-10px);
@@ -723,7 +724,7 @@ tr:hover {
 .dropdown-btn {
     background-color: transparent;
     color: white;
-    padding: 10px 15px;
+    padding: 10px 10px;
     text-align: left;
     text-decoration: none;
     border: none;
@@ -737,7 +738,7 @@ tr:hover {
 
 .dropdown-btn:hover {
     color: #FF4A00;
-    transform: translateX(3px);
+    transform: translateX(5px);
     border-radius: 8px;
 }
 

@@ -149,3 +149,26 @@ async def plant_status(request: Request):
         "line": line,
         "is_connected": state.is_connected
     })
+
+
+@router.get("/line_detail")
+async def line_detail(request: Request):
+    state.title = "Line Detail"
+
+    if request.query_params.get("line"):
+        line = request.query_params.get("line")
+    else:
+        line = request.session["line"]
+    request.session["line"] = line
+
+    if line == "Mex":
+        line = ["MEX", "MX"]
+    elif line == "SSL":
+        line = ["SSL", "LDR"]
+
+
+    return templates.TemplateResponse("line_detail.html", {
+        "request": request,
+        "title": state.title,
+        "line": line
+    })

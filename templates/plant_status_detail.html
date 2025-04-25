@@ -52,7 +52,7 @@
       popupStatus.textContent = normalized;
       popup.classList.add("show");
       const popupLink = document.getElementById("popup-link");
-      popupLink.href = `/main/plant_status_detail?line=${encodeURIComponent(lineName)}`;
+      popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}`;
 
       const popupButton = document.getElementById("popup-link-btn");
       popupButton.textContent = `Go to ${lineName}`;

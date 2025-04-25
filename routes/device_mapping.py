@@ -184,7 +184,7 @@ async def delete_device(request: Request):
                                headers={"Content-Type": "application/json"}
                                )
 
-    image_path = f"static/images/DEVICES/{device}.png"
+    image_path = f"static/images/DEVICES/{channel}.png"
     if os.path.exists(image_path):
         os.remove(image_path)
 
