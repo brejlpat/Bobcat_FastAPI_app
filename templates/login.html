@@ -9,21 +9,16 @@
         body {
             background-image: url('../static/images/bg1.png');
             background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center -68px;
+            height: auto;
         }
     </style>
 </head>
 <body>
     <div class="body">
         <div class="container">
-            <h1>Welcome to DOOSAN Bobcat App</h1>
-            <h2>Login</h2>
-            {# Flash zpráva z FastAPI session #}
-            {% if request.session.get("flash") %}
-                <ul class="flash-messages">
-                    <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
-                </ul>
-                {% set _ = request.session.pop("flash") %}
-            {% endif %}
+            <h2>Login to DOOSAN Bobcat Portal</h2>
 
             <form action="/auth/login" method="post">
                 <label for="username">Username:</label>
