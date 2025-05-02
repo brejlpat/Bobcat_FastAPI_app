@@ -22,22 +22,23 @@
         </div>
     {% endif %}
     <div class="body">
-        <div class="container">
-            <h2>Login to DOOSAN Bobcat Portal</h2>
+        <div class="fade-section">
+            <div class="container">
+                <h2>Login to DOOSAN Bobcat Portal</h2>
 
-            <form action="/auth/login" method="post">
-                <label for="username">Username:</label>
-                <input type="text" id="username" name="username" required>
+                <form action="/auth/login" method="post">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
 
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
 
-                <button type="submit">Login</button>
-            </form>
+                    <button type="submit">Login</button>
+                </form>
 
-            <br>
-            <a href="/auth/register">Request for the access</a>
-
+                <br>
+                <a href="/auth/register">Request for the access</a>
+            </div>
         </div>
     </div>
 

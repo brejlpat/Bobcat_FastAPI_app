@@ -21,7 +21,7 @@
             {{ status_message }}
         </div>
     {% endif %}
-
+    <div class="page-wrapper">
     <!-- Navigační panel -->
     <nav class="navbar">
         <div class="nav-left">
@@ -63,6 +63,14 @@
         <img src="/static/images/logo.png" alt="Loading..." id="bobcat-loader">
         <p style="padding: 10px;"></p>
         <h2>Loading...</h2>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>DOOSAN Bobcat Web App &copy; {{ current_year or '2025' }} | Developed by the Automation & Digitalization Team</p>
+            <p>Support: <a href="mailto:patrik.brejla@doosan.com">patrik.brejla@doosan.com</a></p>
+        </div>
+    </footer>
     </div>
 
 <script>

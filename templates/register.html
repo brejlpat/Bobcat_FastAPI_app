@@ -10,7 +10,7 @@
             background-image: url('../static/images/bg1.png');
             background-size: cover;
             background-repeat: no-repeat;
-            background-position: center;
+            background-position: center -68px;
             height: auto;
         }
     </style>
@@ -23,16 +23,18 @@
     {% endif %}
 
     <div class="body">
-        <div class="container" style="width: 30%;">
-            <h1>Request for the access</h1>
-            <p>Fill in you company e-mail and your request will be sent to the administrator.</p>
+        <div class="fade-section">
+            <div class="container" style="width: 30%; margin: 0 auto;">
+                <h1>Request for the access</h1>
+                <p>Fill in you company e-mail and your request will be sent to the administrator.</p>
 
-            <form action="/auth/register" method="post">
-                <label for="email">Company e-mail:</label>
-                <input type="email" id="email" name="email" required>
+                <form action="/auth/register" method="post">
+                    <label for="email">Use this email format: username@doosan.com</label>
+                    <input type="email" id="email" name="email" required>
 
-                <button type="submit">Send request</button>
-            </form>
+                    <button type="submit">Send request</button>
+                </form>
+            </div>
         </div>
     </div>
 

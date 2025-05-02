@@ -26,7 +26,7 @@
                     <form action="/admin/set_admin/{{ user.ID }}"><button class="role_button">SET Admin</button></form>
                     <form action="/admin/set_production/{{ user.ID }}"><button class="role_button">SET Production</button></form>
                     <form action="/admin/set_user/{{ user.ID }}"><button class="role_button">SET User</button></form>
-                    <form action="/admin/delete_account/{{ user.ID }}"><button class="role_button" onclick="confirmUserDelete({{ user.ID }})">DELETE Account</button></form>
+                    <form action="/admin/delete_account/{{ user.ID }}"><button class="role_button btn-delete" onclick="confirmUserDelete({{ user.ID }})">DELETE Account</button></form>
                 </div>
             </td>
         </tr>
@@ -35,7 +35,7 @@
     <br>
     <h2>Add new user</h2>
     <form action="/admin/add_user" method="POST">
-        <label for="email">Email:</label>
+        <label for="email">Email format: username@doosan.com</label>
         <input type="text" id="email" name="email" required style="width: 50%; margin-left: auto; margin-right: auto; display: block;">
         <button type="submit" style="width: 50%; margin-left: auto; margin-right: auto; display: block;">Add User</button>
     </form>
