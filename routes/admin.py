@@ -119,10 +119,23 @@ async def add_user(request: Request, email: str = Form(...)):
         cur.execute("INSERT INTO users_ad (email) VALUES (%s)", (email,))
         conn.commit()
         msg = EmailMessage()
-        msg['Subject'] = 'Request for Doosan Bobcat web application'
+        msg['Subject'] = 'Your Access Has Been Approved – Doosan Bobcat Web Application'
         msg['From'] = 'webtest.mail@seznam.cz'
         msg['To'] = email
-        msg.set_content(f"Admin approved your access to the application.")
+        msg.set_content(
+            f"""Hello,
+        
+        Your access to the Doosan Bobcat internal web application has been successfully approved by the system administrator.
+        
+        You can now log in using your company credentials.
+        
+        Welcome aboard and thank you for supporting digital transformation at Bobcat!
+        
+        If you experience any issues, feel free to contact the administrator at patrik.brejla@doosan.com.
+        
+        Best regards,  
+        Bobcat Automation Team"""
+        )
 
         with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
             smtp.login("webtest.mail@seznam.cz", "Webtest-123")

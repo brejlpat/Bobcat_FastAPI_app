@@ -87,10 +87,19 @@ async def register_get(request: Request):
 async def register_post(request: Request, email: str = Form(...)):
     try:
         msg = EmailMessage()
-        msg['Subject'] = 'Request for Doosan Bobcat web application'
+        msg['Subject'] = 'New Access Request – Doosan Bobcat Web Application'
         msg['From'] = 'webtest.mail@seznam.cz'
-        msg['To'] = 'patrik.brejla@doosan.com'  # Změň na e-mail admina
-        msg.set_content(f"User with email {email} requested access to the application.")
+        msg['To'] = 'patrik.brejla@doosan.com' # admin email
+        msg.set_content(
+            f"""Hello,
+        
+        A user with the email address {email} has submitted a request to access the internal Doosan Bobcat web application.
+        
+        Please review and approve the request in the account management section.
+        
+        Best regards,  
+        Bobcat Automation Team"""
+        )
 
         with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
             smtp.login("webtest.mail@seznam.cz", "Webtest-123")

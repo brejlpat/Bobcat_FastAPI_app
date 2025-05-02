@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS users_ad (
     id SERIAL PRIMARY KEY,
     username TEXT,
-    email NOT NULL,
-    role DEFAULT 'user',
+    email TEXT NOT NULL UNIQUE,
+    role TEXT DEFAULT 'user',
     registry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ON CONFLICT DO NOTHING
 );
