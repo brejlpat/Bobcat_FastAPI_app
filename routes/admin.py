@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
@@ -34,12 +34,13 @@ def check_logged_in(request: Request):
 @router.get("/users", response_class=HTMLResponse)
 async def accounts(request: Request):
     if not check_logged_in(request):
-        request.session["flash"] = {"message": "You are not logged in!", "category": "error"}
-        return templates.TemplateResponse("login.html", {"request": request})
+        status_message = "You are not logged in, please do so to access this page."
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": status_message})
 
-    cur.execute("SELECT id, username, role FROM users_ad ORDER BY id")
+    cur.execute("SELECT id, username, role, email FROM users_ad ORDER BY id")
     users = cur.fetchall()
-    df_users = pd.DataFrame(users, columns=["ID", "Username", "Role"])
+    df_users = pd.DataFrame(users, columns=["ID", "Username", "Role", "Email"])
     df_users = df_users.to_dict(orient="records")
     return templates.TemplateResponse("users.html", {"request": request, "df_users": df_users})
 
@@ -53,8 +54,9 @@ async def set_admin(request: Request, user_ID: int):
             request.session["role"] = "admin"
         return RedirectResponse(url="/admin/users", status_code=302)
     else:
-        request.session["flash"] = {"message": "You are not an admin!", "category": "error"}
-        return RedirectResponse(url="/auth/login", status_code=302)
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
 
 
 @router.get("/set_production/{user_ID}")
@@ -66,8 +68,9 @@ async def set_production(request: Request, user_ID: int):
             request.session["role"] = "production"
         return RedirectResponse(url="/admin/users", status_code=302)
     else:
-        request.session["flash"] = {"message": "You are not an admin!", "category": "error"}
-        return RedirectResponse(url="/auth/login", status_code=302)
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
 
 
 @router.get("/set_user/{user_ID}")
@@ -79,8 +82,9 @@ async def set_user(request: Request, user_ID: int):
             request.session["role"] = "user"
         return RedirectResponse(url="/admin/users", status_code=302)
     else:
-        request.session["flash"] = {"message": "You are not an admin!", "category": "error"}
-        return RedirectResponse(url="/auth/login", status_code=302)
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
 
 
 @router.get("/delete_account/{user_ID}")
@@ -88,3 +92,29 @@ async def delete_account(request: Request, user_ID: int):
     cur.execute("DELETE FROM users_ad WHERE id = %s", (user_ID,))
     conn.commit()
     return RedirectResponse(url="/admin/users", status_code=302)
+
+
+@router.post("/add_user", response_class=HTMLResponse)
+async def add_user(request: Request, email: str = Form(...)):
+    if not check_logged_in(request):
+        status_message = "You are not logged in, please do so to access this page."
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": status_message})
+    try:
+        cur.execute("INSERT INTO users_ad (email) VALUES (%s)", (email,))
+        conn.commit()
+        status_message = "User added successfully!"
+    except Exception as e:
+        conn.rollback()
+        status_message = f"Error adding user: {e}"
+
+    # ✅ znovu použijeme logiku z admin/users
+    cur.execute("SELECT id, username, role, email FROM users_ad ORDER BY id")
+    users = cur.fetchall()
+    df_users = [{"ID": u[0], "Username": u[1], "Role": u[2], "Email": u[3]} for u in users]
+
+    return templates.TemplateResponse("users.html", {
+        "request": request,
+        "df_users": df_users,
+        "status_message": status_message
+    })

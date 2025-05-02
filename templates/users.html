@@ -5,11 +5,12 @@
     <div style="text-align: left">
         <a href="/main/home" class="btn-back"><img src="../static/images/back-btn.png" alt="Back"></a>
     </div>
-    <h1>Account management</h1>
 
+    <h1>Account management</h1>
     <table>
         <tr>
             <th>ID</th>
+            <th>Email</th>
             <th>Username</th>
             <th>Role</th>
             <th>Action</th>
@@ -17,6 +18,7 @@
         {% for user in df_users %}
         <tr>
             <td>{{ user.ID }}</td>
+            <td>{{ user.Email }}</td>
             <td>{{ user.Username }}</td>
             <td>{{ user.Role }}</td>
             <td>
@@ -30,5 +32,12 @@
         </tr>
         {% endfor %}
     </table>
+    <br>
+    <h2>Add new user</h2>
+    <form action="/admin/add_user" method="POST">
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email" required style="width: 50%; margin-left: auto; margin-right: auto; display: block;">
+        <button type="submit" style="width: 50%; margin-left: auto; margin-right: auto; display: block;">Add User</button>
+    </form>
 </div>
 {% endblock %}

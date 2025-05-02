@@ -16,12 +16,10 @@
     </style>
 </head>
 <body>
-
-    {% if request.session.get("flash") %}
-        <ul class="flash-messages">
-            <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
-        </ul>
-        {% set _ = request.session.pop("flash") %}
+    {% if status_message %}
+        <div id="toast" class="toast">
+            {{ status_message }}
+        </div>
     {% endif %}
 
     <div class="body">
@@ -37,5 +35,15 @@
             </form>
         </div>
     </div>
+
+<script>
+    // Záloha skrytí toastu
+    setTimeout(function() {
+        const toast = document.getElementById("toast");
+        if (toast) {
+            toast.style.display = "none";
+        }
+    }, 3000);
+</script>
 </body>
 </html>
