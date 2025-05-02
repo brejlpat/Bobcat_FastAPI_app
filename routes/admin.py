@@ -4,7 +4,10 @@ from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
+from starlette.datastructures import URL
 import psycopg2
+from email.message import EmailMessage
+import smtplib
 from psycopg2.extras import DictCursor
 import pandas as pd
 import os
@@ -42,7 +45,13 @@ async def accounts(request: Request):
     users = cur.fetchall()
     df_users = pd.DataFrame(users, columns=["ID", "Username", "Role", "Email"])
     df_users = df_users.to_dict(orient="records")
-    return templates.TemplateResponse("users.html", {"request": request, "df_users": df_users})
+
+    # převod flash hlášky do status_message pro toast
+    flash = request.session.pop("flash", None)
+    status_message = flash["message"] if flash else None
+
+    return templates.TemplateResponse("users.html", {"request": request, "df_users": df_users,
+                                                     "status_message": status_message})
 
 
 @router.get("/set_admin/{user_ID}")
@@ -89,8 +98,14 @@ async def set_user(request: Request, user_ID: int):
 
 @router.get("/delete_account/{user_ID}")
 async def delete_account(request: Request, user_ID: int):
-    cur.execute("DELETE FROM users_ad WHERE id = %s", (user_ID,))
-    conn.commit()
+    try:
+        cur.execute("DELETE FROM users_ad WHERE id = %s", (user_ID,))
+        conn.commit()
+        request.session["flash"] = {"message": "User deleted successfully! ✅", "category": "success"}
+    except Exception as e:
+        conn.rollback()
+        request.session["flash"] = {"message": f"Error deleting user: {e}", "category": "error"}
+
     return RedirectResponse(url="/admin/users", status_code=302)
 
 
@@ -103,7 +118,17 @@ async def add_user(request: Request, email: str = Form(...)):
     try:
         cur.execute("INSERT INTO users_ad (email) VALUES (%s)", (email,))
         conn.commit()
-        status_message = "User added successfully!"
+        msg = EmailMessage()
+        msg['Subject'] = 'Request for Doosan Bobcat web application'
+        msg['From'] = 'webtest.mail@seznam.cz'
+        msg['To'] = email
+        msg.set_content(f"Admin approved your access to the application.")
+
+        with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
+            smtp.login("webtest.mail@seznam.cz", "Webtest-123")
+            smtp.send_message(msg)
+
+        status_message = "User added successfully! ✅"
     except Exception as e:
         conn.rollback()
         status_message = f"Error adding user: {e}"

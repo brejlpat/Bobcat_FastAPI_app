@@ -33,16 +33,19 @@ async def login_page(request: Request):
 @router.post("/login")
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
     try:
+        # kontrola připojení k LDAP
         server = Server(LDAP_SERVER, get_info=ALL)
         conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
 
         if not conn_ldap.bind():
             raise Exception("Bind failed")
 
+        # kontrola existence uživatele v LDAP
         conn_ldap.search(BASE_DN, f"(sAMAccountName={username})", attributes=['cn', 'mail'])
         if not conn_ldap.entries:
             raise Exception("LDAP user not found")
 
+        # získání údajů o uživateli
         ldap_user = conn_ldap.entries[0]
         email = ldap_user.mail.value
         full_name = ldap_user.cn.value
@@ -65,11 +68,12 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         request.session["username"] = full_name
         request.session["role"] = user["role"]
         request.session["id"] = user["id"]
-        status_message = "Login successful"
+        status_message = "Login successful ✅"
         return templates.TemplateResponse("home.html", {"request": request, "status_message": status_message})
 
     except Exception as e:
         status_message = f"Login failed - check your credentials"
+        a = str(e)
         return templates.TemplateResponse("login.html", {"request": request,
                                                          "status_message": status_message})
 
@@ -107,7 +111,6 @@ async def logout(request: Request):
     request.session.pop("username", None)
     request.session.pop("role", None)
     request.session.pop("id", None)
-
-    status_message = "Logout successful"
+    status_message = "Logout successful ✅"
     return templates.TemplateResponse("login.html", {"request": request, "status_message": status_message})
 

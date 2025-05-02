@@ -26,7 +26,7 @@
                     <form action="/admin/set_admin/{{ user.ID }}"><button class="role_button">SET Admin</button></form>
                     <form action="/admin/set_production/{{ user.ID }}"><button class="role_button">SET Production</button></form>
                     <form action="/admin/set_user/{{ user.ID }}"><button class="role_button">SET User</button></form>
-                    <form action="/admin/delete_account/{{ user.ID }}"><button class="role_button">DELETE Account</button></form>
+                    <form action="/admin/delete_account/{{ user.ID }}"><button class="role_button" onclick="confirmUserDelete({{ user.ID }})">DELETE Account</button></form>
                 </div>
             </td>
         </tr>
@@ -40,4 +40,17 @@
         <button type="submit" style="width: 50%; margin-left: auto; margin-right: auto; display: block;">Add User</button>
     </form>
 </div>
+
+<script>
+function confirmUserDelete(userId) {
+    const confirmation = prompt("Type 'Confirm' to delete this user:");
+
+    if (confirmation === "Confirm") {
+        window.location.href = `/admin/delete_account`;
+    } else if (confirmation !== null) {
+        alert("Action cancelled or confirmation text was incorrect.");
+    }
+}
+</script>
+
 {% endblock %}
