@@ -117,8 +117,8 @@ button:hover {
 }
 
 .role_button:hover {
-    transform: scale(1.05);
-    background-color: #555;
+    transform: scale(1.02);
+    background-color: #B33B0D;
     color: white;
 }
 

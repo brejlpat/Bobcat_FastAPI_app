@@ -69,7 +69,7 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         return templates.TemplateResponse("home.html", {"request": request, "status_message": status_message})
 
     except Exception as e:
-        status_message = "Login failed: " + str(e)
+        status_message = f"Login failed - check your credentials"
         return templates.TemplateResponse("login.html", {"request": request,
                                                          "status_message": status_message})
 
@@ -83,10 +83,10 @@ async def register_get(request: Request):
 async def register_post(request: Request, email: str = Form(...)):
     try:
         msg = EmailMessage()
-        msg['Subject'] = 'Nová žádost o přístup do aplikace'
+        msg['Subject'] = 'Request for Doosan Bobcat web application'
         msg['From'] = 'webtest.mail@seznam.cz'
         msg['To'] = 'patrik.brejla@doosan.com'  # Změň na e-mail admina
-        msg.set_content(f"Uživatel s e-mailem {email} žádá o přístup do aplikace.")
+        msg.set_content(f"User with email {email} requested access to the application.")
 
         with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
             smtp.login("webtest.mail@seznam.cz", "Webtest-123")
