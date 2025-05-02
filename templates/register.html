@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="shortcut icon" href="/static/images/favicon.ico" type="image/x-icon">
-    <title>Registration</title>
+    <title>Žádost o přístup</title>
     <style>
         body {
             background-image: url('../static/images/bg1.png');
@@ -17,7 +17,6 @@
 </head>
 <body>
 
-    {# Flash zpráva z FastAPI session #}
     {% if request.session.get("flash") %}
         <ul class="flash-messages">
             <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
@@ -27,24 +26,15 @@
 
     <div class="body">
         <div class="container" style="width: 30%;">
-        <h1>Registration</h1>
-        <p>{{ string }}</p>
+            <h1>Request for the access</h1>
+            <p>Fill in you company e-mail and your request will be sent to the administrator.</p>
 
-        <form action="/auth/register" method="post">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+            <form action="/auth/register" method="post">
+                <label for="email">Company e-mail:</label>
+                <input type="email" id="email" name="email" required>
 
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required>
-
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="email">E-mail:</label>
-            <input type="text" id="email" name="email" required>
-
-            <button type="submit">Register</button>
-        </form>
+                <button type="submit">Send request</button>
+            </form>
         </div>
     </div>
 </body>

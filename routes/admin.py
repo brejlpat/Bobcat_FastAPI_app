@@ -37,7 +37,7 @@ async def accounts(request: Request):
         request.session["flash"] = {"message": "You are not logged in!", "category": "error"}
         return templates.TemplateResponse("login.html", {"request": request})
 
-    cur.execute("SELECT id, username, role FROM users ORDER BY id")
+    cur.execute("SELECT id, username, role FROM users_ad ORDER BY id")
     users = cur.fetchall()
     df_users = pd.DataFrame(users, columns=["ID", "Username", "Role"])
     df_users = df_users.to_dict(orient="records")
@@ -47,7 +47,7 @@ async def accounts(request: Request):
 @router.get("/set_admin/{user_ID}")
 async def set_admin(request: Request, user_ID: int):
     if request.session.get("role") == "admin":
-        cur.execute("UPDATE users SET role = 'admin' WHERE id = %s", (user_ID,))
+        cur.execute("UPDATE users_ad SET role = 'admin' WHERE id = %s", (user_ID,))
         conn.commit()
         if request.session.get("id") == user_ID:
             request.session["role"] = "admin"
@@ -60,7 +60,7 @@ async def set_admin(request: Request, user_ID: int):
 @router.get("/set_production/{user_ID}")
 async def set_production(request: Request, user_ID: int):
     if request.session.get("role") == "admin":
-        cur.execute("UPDATE users SET role = 'production' WHERE id = %s", (user_ID,))
+        cur.execute("UPDATE users_ad SET role = 'production' WHERE id = %s", (user_ID,))
         conn.commit()
         if request.session.get("id") == user_ID:
             request.session["role"] = "production"
@@ -73,7 +73,7 @@ async def set_production(request: Request, user_ID: int):
 @router.get("/set_user/{user_ID}")
 async def set_user(request: Request, user_ID: int):
     if request.session.get("role") == "admin":
-        cur.execute("UPDATE users SET role = 'user' WHERE id = %s", (user_ID,))
+        cur.execute("UPDATE users_ad SET role = 'user' WHERE id = %s", (user_ID,))
         conn.commit()
         if request.session.get("id") == user_ID:
             request.session["role"] = "user"
@@ -85,6 +85,6 @@ async def set_user(request: Request, user_ID: int):
 
 @router.get("/delete_account/{user_ID}")
 async def delete_account(request: Request, user_ID: int):
-    cur.execute("DELETE FROM users WHERE id = %s", (user_ID,))
+    cur.execute("DELETE FROM users_ad WHERE id = %s", (user_ID,))
     conn.commit()
     return RedirectResponse(url="/admin/users", status_code=302)

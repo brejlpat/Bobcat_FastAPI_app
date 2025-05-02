@@ -49,7 +49,7 @@ async def home(request: Request):
         line = request.query_params.get("line")
     else:
         line = request.session["line"]
-    cur.execute("SELECT COUNT(*) FROM users")
+    cur.execute("SELECT COUNT(*) FROM users_ad")
     users_amount = cur.fetchone()
 
     """

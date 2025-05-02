@@ -16,13 +16,18 @@
     </style>
 </head>
 <body>
+    {% if status_message %}
+        <div id="toast" class="toast">
+            {{ status_message }}
+        </div>
+    {% endif %}
     <div class="body">
         <div class="container">
             <h2>Login to DOOSAN Bobcat Portal</h2>
 
             <form action="/auth/login" method="post">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" value="" required>
+                <input type="text" id="username" name="username" required>
 
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
@@ -31,8 +36,19 @@
             </form>
 
             <br>
-            <a href="/auth/register">Create an account</a>
+            <a href="/auth/register">Request for the access</a>
+
         </div>
     </div>
+
+<script>
+    // Záloha skrytí toastu
+    setTimeout(function() {
+        const toast = document.getElementById("toast");
+        if (toast) {
+            toast.style.display = "none";
+        }
+    }, 3000);
+</script>
 </body>
 </html>
