@@ -246,7 +246,7 @@ tr:hover td {
     position: fixed;
     top: 0;
     z-index: 1000;
-    width: 99%;
+    width: 98%;
 }
 
 .nav-center {
@@ -689,14 +689,15 @@ tr:hover td {
     display: none;
     position: fixed;
     top: 50%;
-    left: 50%;
+    left: 20%;
     transform: translate(-50%, -50%);
-    z-index: 100;
+    z-index: 1000;
     background: #333;
     padding: 1.5rem;
     border-radius: 12px;
     box-shadow: 0 0 20px rgba(0,0,0,0.6);
     color: #fff;
+    transition: opacity 0.3s ease;
 }
 
 .popup-content {
@@ -733,7 +734,9 @@ tr:hover td {
 
 #popup.show {
     animation: fadeInScale 0.3s ease forwards;
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes fadeInScale {

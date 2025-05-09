@@ -37,46 +37,82 @@
     const svgDoc = this.contentDocument;
 
     const popup = document.getElementById("popup");
-    const popupLine = document.getElementById("popup-line");
-    const popupStatus = document.getElementById("popup-status");
-    const popupLink = document.getElementById("popup-link");
-    const popupButton = document.getElementById("popup-link-btn");
+    const popupContent = popup.querySelector(".popup-content");
+    const closeBtn = document.getElementById("close-popup");
+
+    const popupLine = document.createElement("h3");
+    const popupStatus = document.createElement("p");
+    const popupLink = document.createElement("a");
+    const popupButton = document.createElement("button");
+    popupButton.className = "role_button";
+
+    let popupLocked = false;
 
     function showPopup(lineName) {
-      popupLine.textContent = lineName;
-      popupStatus.textContent = "ruining";
+      const img = document.createElement("img");
+      img.src = `../static/images/DEVICES/${lineName}.png`;
+      img.style.width = "100%";
+      img.style.borderRadius = "10px";
+      img.style.marginBottom = "1rem";
+
+      popupLine.textContent = `Zařízení: ${lineName}`;
+      popupLine.style.color = "white";
+      popupStatus.innerHTML = `<strong>Status:</strong> running`;
+
+      const desc = document.createElement("p");
+      desc.textContent = "Popis není k dispozici.";
+      desc.style.color = "#ddd";
+
+      popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}&status=ok`;
+      popupButton.textContent = `Přejít na ${lineName}`;
+      popupLink.innerHTML = '';
+      popupLink.appendChild(popupButton);
+
+      popupContent.innerHTML = '';
+      popupContent.appendChild(closeBtn); // znovu připojeno
+      popupContent.appendChild(img);
+      popupContent.appendChild(popupLine);
+      popupContent.appendChild(popupStatus);
+      popupContent.appendChild(desc);
+      popupContent.appendChild(popupLink);
+
+      // 👇 znovu připojit listener po appendu
+      closeBtn.onclick = (event) => {
+        event.stopPropagation();
+        popup.classList.remove("show");
+        popupLocked = false;
+      };
+
       popup.classList.add("show");
-      popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}&status="ok"`;
-      popupButton.textContent = `Go to ${lineName}`;
     }
 
-    document.getElementById("close-popup").addEventListener("click", (event) => {
-      event.stopPropagation();
-      popup.classList.remove("show");
-    });
-
-    // Najdeme všechny skupiny <g> s id
     const groups = svgDoc.querySelectorAll("g[id]");
 
     groups.forEach(group => {
       const groupId = group.id;
-
-      // Každý <rect> uvnitř skupiny uděláme klikací
       const rects = group.querySelectorAll("rect");
+
       rects.forEach(rect => {
         rect.style.cursor = "pointer";
 
         rect.addEventListener("mouseenter", () => {
           rect.style.stroke = "#ff0000";
           rect.style.strokeWidth = "2";
+          if (!popupLocked) {
+            showPopup(groupId);
+          }
         });
 
         rect.addEventListener("mouseleave", () => {
           rect.style.stroke = "none";
+          if (!popupLocked) {
+            popup.classList.remove("show");
+          }
         });
 
         rect.addEventListener("click", (e) => {
           e.preventDefault();
+          popupLocked = true;
           showPopup(groupId);
         });
       });
