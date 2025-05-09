@@ -61,7 +61,12 @@
 
     document.getElementById("close-popup").addEventListener("click", (event) => {
       event.stopPropagation();
-      popup.classList.remove("show");
+      popup.classList.add("fade-out");
+      setTimeout(() => {
+        popup.classList.remove("fade-out");
+        popup.classList.remove("show");
+        popupLocked = false;
+      }, 300); // trvání animace
     });
 
     statusData.forEach(({ name, value }) => {

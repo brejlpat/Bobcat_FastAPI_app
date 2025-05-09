@@ -60,7 +60,6 @@
       popupStatus.innerHTML = `<strong>Status:</strong> running`;
 
       const desc = document.createElement("p");
-      desc.textContent = "Popis není k dispozici.";
       desc.style.color = "#ddd";
 
       popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}&status=ok`;
@@ -69,22 +68,30 @@
       popupLink.appendChild(popupButton);
 
       popupContent.innerHTML = '';
-      popupContent.appendChild(closeBtn); // znovu připojeno
+      popupContent.appendChild(closeBtn);
       popupContent.appendChild(img);
       popupContent.appendChild(popupLine);
       popupContent.appendChild(popupStatus);
       popupContent.appendChild(desc);
       popupContent.appendChild(popupLink);
 
-      // 👇 znovu připojit listener po appendu
-      closeBtn.onclick = (event) => {
-        event.stopPropagation();
-        popup.classList.remove("show");
-        popupLocked = false;
-      };
-
       popup.classList.add("show");
     }
+
+    closeBtn.onclick = (event) => {
+      event.stopPropagation();
+
+      // Spustit fade-out
+      popup.classList.add("fade-out");
+
+      // Po animaci (300ms) skrýt popup
+      setTimeout(() => {
+        popup.classList.remove("fade-out");
+        popup.classList.remove("show");
+        popupLocked = false;
+      }, 300);
+    };
+
 
     const groups = svgDoc.querySelectorAll("g[id]");
 
@@ -106,7 +113,11 @@
         rect.addEventListener("mouseleave", () => {
           rect.style.stroke = "none";
           if (!popupLocked) {
-            popup.classList.remove("show");
+            popup.classList.add("fade-out");
+            setTimeout(() => {
+              popup.classList.remove("fade-out");
+              popup.classList.remove("show");
+            }, 300); // délka animace fadeOutPanel
           }
         });
 
@@ -119,5 +130,7 @@
     });
   });
 </script>
+
+
 
 {% endblock %}
