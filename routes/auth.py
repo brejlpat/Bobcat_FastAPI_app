@@ -33,6 +33,7 @@ async def login_page(request: Request):
 @router.post("/login")
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
     try:
+        request.session.clear()
         # kontrola připojení k LDAP
         server = Server(LDAP_SERVER, get_info=ALL)
         conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
@@ -116,10 +117,7 @@ async def register_post(request: Request, email: str = Form(...)):
 
 @router.get("/logout")
 async def logout(request: Request):
-    request.session.pop("user_id", None)
-    request.session.pop("username", None)
-    request.session.pop("role", None)
-    request.session.pop("id", None)
+    request.session.clear()
     status_message = "Logout successful ✅"
     return templates.TemplateResponse("login.html", {"request": request, "status_message": status_message})
 

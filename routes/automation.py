@@ -8,8 +8,15 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
+def check_session(request: Request):
+    return "user_id" in request.session
+
+
 @router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     if request.query_params.get("line"):
         line = request.query_params.get("line")
         request.session["line"] = line  # <-- tady se to musí uložit

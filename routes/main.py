@@ -39,16 +39,25 @@ conn = psycopg2.connect(
 cur = conn.cursor(cursor_factory=DictCursor)
 
 
+def check_session(request: Request):
+    return "user_id" in request.session
+
+
 @router.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
     state.title = "Home Page"
     if "user_id" not in request.session:
         request.session["flash"] = {"message": "Please log in first!", "category": "error"}
         return RedirectResponse(url="/auth/login", status_code=302)
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-    else:
-        line = request.session["line"]
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+        else:
+            line = request.session["line"]
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
+
     cur.execute("SELECT COUNT(*) FROM users_ad")
     users_amount = cur.fetchone()
 
@@ -86,6 +95,9 @@ async def home(request: Request):
 
 @router.get("/plant_status", response_class=HTMLResponse)
 async def plant_status(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     state.title = "Plant Status Overview"
 
     try:
@@ -153,13 +165,19 @@ async def plant_status(request: Request):
 
 @router.get("/line_detail")
 async def line_detail(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     state.title = "Line Detail"
 
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-    else:
-        line = request.session["line"]
-    request.session["line"] = line
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+        else:
+            line = request.session["line"]
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
 
     return templates.TemplateResponse("plant_status_detail.html", {
         "request": request,

@@ -28,19 +28,19 @@ conn = psycopg2.connect(
 cur = conn.cursor(cursor_factory=DictCursor)
 
 
-def check_logged_in(request: Request):
-    if "user_id" not in request.session:
-        return False
-    return True
+def check_session(request: Request):
+    return "user_id" in request.session
 
 
 @router.get("/users", response_class=HTMLResponse)
 async def accounts(request: Request):
-    if not check_logged_in(request):
-        status_message = "You are not logged in, please do so to access this page."
+    if not check_session(request):
         return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": status_message})
-
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     cur.execute("SELECT id, username, role, email FROM users_ad ORDER BY id")
     users = cur.fetchall()
     df_users = pd.DataFrame(users, columns=["ID", "Username", "Role", "Email"])
@@ -56,6 +56,13 @@ async def accounts(request: Request):
 
 @router.get("/set_admin/{user_ID}")
 async def set_admin(request: Request, user_ID: int):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     if request.session.get("role") == "admin":
         cur.execute("UPDATE users_ad SET role = 'admin' WHERE id = %s", (user_ID,))
         conn.commit()
@@ -70,6 +77,13 @@ async def set_admin(request: Request, user_ID: int):
 
 @router.get("/set_production/{user_ID}")
 async def set_production(request: Request, user_ID: int):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     if request.session.get("role") == "admin":
         cur.execute("UPDATE users_ad SET role = 'production' WHERE id = %s", (user_ID,))
         conn.commit()
@@ -84,6 +98,13 @@ async def set_production(request: Request, user_ID: int):
 
 @router.get("/set_user/{user_ID}")
 async def set_user(request: Request, user_ID: int):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     if request.session.get("role") == "admin":
         cur.execute("UPDATE users_ad SET role = 'user' WHERE id = %s", (user_ID,))
         conn.commit()
@@ -98,6 +119,13 @@ async def set_user(request: Request, user_ID: int):
 
 @router.get("/delete_account/{user_ID}")
 async def delete_account(request: Request, user_ID: int):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     try:
         cur.execute("DELETE FROM users_ad WHERE id = %s", (user_ID,))
         conn.commit()
@@ -111,10 +139,13 @@ async def delete_account(request: Request, user_ID: int):
 
 @router.post("/add_user", response_class=HTMLResponse)
 async def add_user(request: Request, email: str = Form(...)):
-    if not check_logged_in(request):
-        status_message = "You are not logged in, please do so to access this page."
+    if not check_session(request):
         return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": status_message})
+                                                         "status_message": "Please log in first!"})
+    if request.session.get("role") != "admin":
+        status_message = "You are not an admin, you cannot access this page."
+        return templates.TemplateResponse("home.html", {"request": request,
+                                                        "status_message": status_message})
     try:
         cur.execute("INSERT INTO users_ad (email) VALUES (%s)", (email,))
         conn.commit()

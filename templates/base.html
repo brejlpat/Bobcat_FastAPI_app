@@ -100,54 +100,51 @@
 </script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const loader = document.getElementById("loader-overlay");
-        let isHistoryNavigation = false;
+document.addEventListener("DOMContentLoaded", function () {
+    const loader = document.getElementById("loader-overlay");
 
-        // Detekce tlačítka zpět (nechceme zobrazovat loader)
-        window.addEventListener('popstate', () => {
-            isHistoryNavigation = true;
-        });
+    function showLoader() {
+        loader.style.display = "flex";
+    }
 
-        function showLoader(e) {
-            if (isHistoryNavigation) {
-                isHistoryNavigation = false; // reset
-                return;
-            }
+    // Detekce načtení stránky z historie (zpět/vpřed)
+    window.addEventListener('pageshow', function (event) {
+        if (event.persisted || window.performance && window.performance.getEntriesByType("navigation")[0].type === "back_forward") {
             if (loader) {
-                loader.style.display = "flex";
+                loader.style.display = "none"; // Skryje loader při navigaci z historie
             }
         }
-
-        // Všechny formuláře
-        document.querySelectorAll("form").forEach(form => {
-            form.addEventListener("submit", showLoader);
-        });
-
-        // Odkazy kromě target _blank nebo href #
-        document.querySelectorAll("a[href]").forEach(link => {
-            link.addEventListener("click", function () {
-                const href = link.getAttribute("href");
-                const target = link.getAttribute("target");
-                if (!href.startsWith("#") && target !== "_blank") {
-                    showLoader();
-                }
-            });
-        });
-
-        // Tlačítka bez specifikovaného typu nebo s typem submit
-        document.querySelectorAll("button").forEach(button => {
-            button.addEventListener("click", function () {
-                const type = button.getAttribute("type");
-                const isHamburger = button.id === "hamburger-toggle";
-                if ((type === null || type === "submit") && !isHamburger) {
-                    showLoader();
-                }
-            });
-});
-
     });
+
+    // Formuláře
+    document.querySelectorAll("form").forEach(form => {
+        form.addEventListener("submit", showLoader);
+    });
+
+    // Odkazy kromě target _blank nebo href #
+    document.querySelectorAll("a[href]").forEach(link => {
+        link.addEventListener("click", function (event) {
+            const href = link.getAttribute("href") || "";
+            const target = link.getAttribute("target");
+            const id = link.getAttribute("id");
+
+            if (!href.startsWith("#") && target !== "_blank" && id !== "custom-back-button") {
+                showLoader();
+            }
+        });
+    });
+
+    // Tlačítka kromě hamburgeru
+    document.querySelectorAll("button").forEach(button => {
+        const type = button.getAttribute("type");
+        const isHamburger = button.id === "hamburger-toggle";
+        if ((type === null || type === "submit") && !isHamburger) {
+            button.addEventListener("click", showLoader);
+        }
+    });
+});
 </script>
+
 
 <script>
     // Záloha skrytí toastu

@@ -20,9 +20,16 @@ opc_client = None
 status_message = "❌ Disconnected"
 
 
+def check_session(request: Request):
+    return "user_id" in request.session
+
+
 @router.get("/lines", response_class=HTMLResponse)
 async def devices(request: Request):
-    await disconnect_opcua()
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
+    await disconnect_opcua(request)
     state.title = "Device Mapping - Lines"
 
     return templates.TemplateResponse("device_mapping.html", {"request": request,
@@ -33,13 +40,19 @@ async def devices(request: Request):
 
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global status_message
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-        request.session["line"] = line  # <-- tady se to musí uložit
-    else:
-        line = request.session.get("line", "❌")
-
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+            request.session["line"] = line  # <-- tady se to musí uložit
+        else:
+            line = request.session.get("line", "❌")
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
     opc_devices = request.session.get("opc_devices", [])
     state.title = f"Device Mapping - {line}"
     return templates.TemplateResponse("device.html", {
@@ -54,12 +67,19 @@ async def device(request: Request):
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global opc_client, status_message
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-        request.session["line"] = line  # <-- tady se to musí uložit
-    else:
-        line = request.session.get("line", "❌")
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+            request.session["line"] = line  # <-- tady se to musí uložit
+        else:
+            line = request.session.get("line", "❌")
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
 
     state.title = f"Device Mapping - {line}"
     try:
@@ -111,7 +131,10 @@ async def connect_opcua(request: Request):
 
 
 @router.post("/disconnect_opcua")
-async def disconnect_opcua():
+async def disconnect_opcua(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global opc_client, status_message
     state.title = f"Device Mapping - Lines"
     if opc_client:
@@ -124,12 +147,19 @@ async def disconnect_opcua():
 
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     state.title = "Device Mapping - Driver Setting"
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-        request.session["line"] = line  # <-- tady se to musí uložit
-    else:
-        line = request.session.get("line", "❌")
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+            request.session["line"] = line  # <-- tady se to musí uložit
+        else:
+            line = request.session.get("line", "❌")
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
 
     return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected,
                                                               "title": state.title, "line": line})
@@ -141,13 +171,20 @@ def get_is_connected():
 
 @router.get("/device_details")
 async def device_details(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
-        request.session["line"] = line  # <-- tady se to musí uložit
-    else:
-        line = request.session.get("line", "❌")
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+            request.session["line"] = line  # <-- tady se to musí uložit
+        else:
+            line = request.session.get("line", "❌")
+    except Exception as e:
+        line = "❌"
+        request.session["line"] = line
 
     if not device:
         pass
@@ -177,6 +214,9 @@ async def device_details(request: Request):
 
 @router.get("/delete_device")
 async def delete_device(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
 
@@ -204,14 +244,21 @@ async def delete_device(request: Request):
 
 @router.get("/show_tags", response_class=HTMLResponse)
 async def show_tags(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
-    if request.query_params.get("line"):
-        line = request.query_params.get("line")
+    try:
+        if request.query_params.get("line"):
+            line = request.query_params.get("line")
+            request.session["line"] = line  # <-- tady se to musí uložit
+        else:
+            line = request.session.get("line", "❌")
+    except Exception as e:
+        line = "❌"
         request.session["line"] = line
-    else:
-        line = request.session.get("line", "❌")
 
     opc_url = "opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320"
     username = "DBR_Automation"
@@ -297,6 +344,9 @@ async def show_tags(request: Request):
 
 @router.get("/cancel_tags")
 async def cancel_tags(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
@@ -321,6 +371,9 @@ async def cancel_tags(request: Request):
 
 @router.get("/edit_device", response_class=HTMLResponse)
 async def edit_device_get(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global device_payload
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
@@ -356,6 +409,9 @@ async def edit_device_get(request: Request):
 
 @router.post("/edit_device")
 async def edit_device_post(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global device_payload
     form = await request.form()
 
@@ -411,6 +467,9 @@ async def edit_device_post(request: Request):
 
 @router.get("/edit_channel", response_class=HTMLResponse)
 async def edit_channel_get(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global channel_payload
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
@@ -447,6 +506,9 @@ async def edit_channel_get(request: Request):
 
 @router.post("/edit_channel")
 async def edit_channel_post(request: Request):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     global channel_payload
     form = await request.form()
 

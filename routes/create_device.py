@@ -10,11 +10,18 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 
+def check_session(request: Request):
+    return "user_id" in request.session
+
+
 @router.post("/channel")
 async def channel(
         request: Request,
         driver: str = Form(...)
 ):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     status_message = f"You´ve selected driver: {driver}"
     return templates.TemplateResponse("channel_setting.html",
                                       {"request": request, "driver": driver, "status_message": status_message})
@@ -28,6 +35,9 @@ async def create_channel(
         endpoint_url: str = Form(...),
         description: str = Form("")
 ):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     # KEPServerEX REST API endpoint
     url = "http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels"
 
@@ -75,6 +85,9 @@ async def create_OPC_UA_CLIENT_device(
         description: str = Form(...),
         image: UploadFile = File(...)
 ):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
 
     # Přihlašovací údaje pro REST API Kepware
@@ -164,6 +177,9 @@ async def create_tag(
         tag_data_type: int = Form(...),
         description: str = Form(...)
 ):
+    if not check_session(request):
+        return templates.TemplateResponse("login.html", {"request": request,
+                                                         "status_message": "Please log in first!"})
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices/{device_name}/tags"
 
     # Přihlašovací údaje pro REST API Kepware

@@ -4,6 +4,8 @@
 <div class="container">
     <section class="plant-map-section">
         <h1>Plant Line Status Map</h1>
+        <p>Click on a line to view its status & devices</p>
+        <p style="color: red !important">IN PROGRESS - only button for MEX line will take you further</p>
 
         <div class="legend">
             <h2>Legend:</h2>
@@ -103,7 +105,7 @@
   // Automatické obnovení stránky každou minutu (60 000 ms)
   setInterval(function () {
     window.location.reload();
-  }, 60000);
+  }, 300000);
 </script>
 
 {% endblock %}
