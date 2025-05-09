@@ -198,6 +198,9 @@ async def device_details(request: Request):
     device_data = response.json()
     if device_data:
         device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")
+    print("#################################")
+    print(device_id)
+    print("#################################")
     device_info = {
         "channel": channel,
         "device": device,
