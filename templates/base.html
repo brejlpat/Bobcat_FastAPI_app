@@ -25,20 +25,36 @@
     <!-- Navigační panel -->
     <nav class="navbar">
         <div class="nav-left">
-            <a href="/main/home"><img src="/static/images/bobcat_logo.png" alt="Doosan Bobcat" class="logo"></a>
-            <a href="/automation/dashboard">Automation</a>
-            <a href="#">CNC Machine</a>
-            <a href="/device_mapping/lines" id="device-mapping-link" data-connected="{{ is_connected }}">
-                Device Mapping
-            </a>
-            <a href="/main/plant_status">Plant Status</a>
+            <!-- Hamburger ikonka -->
+            <button id="hamburger-toggle" class="hamburger-btn">
+                <i class="fas fa-bars"></i>
+            </button>
 
-            {% if is_connected %}
-            <a href="/device_mapping/device?line={{ line }}">
-                → {{ line }} 🟢
-            </a>
-            {% endif %}
+
+
+            <!-- Navigace (přesunuta do panelu vlevo) -->
+            <div id="side-panel" class="side-panel">
+                <!-- Logo-->
+                <a href="/main/home">
+                    <img src="/static/images/bobcat_logo.png" alt="Home" class="logo">
+                </a>
+                <a href="/automation/dashboard"><i class="fas fa-cogs"></i> Automation</a>
+                <a href="#"><i class="fas fa-industry"></i> CNC Machine</a>
+                <a href="/device_mapping/lines"><i class="fas fa-network-wired"></i> Device Mapping</a>
+                <a href="/main/plant_status"><i class="fas fa-map"></i> Plant Status</a>
+                {% if is_connected %}
+                    <a href="/device_mapping/device?line={{ line }}">→ {{ line }} 🟢</a>
+                {% endif %}
+            </div>
+            <!-- Překryv -->
+            <div id="side-overlay" class="side-overlay"></div>
         </div>
+
+        <!-- Prostřední text -->
+        <div class="nav-center">
+            <span class="app-title">DOOSAN Bobcat – Automation Portal</span>
+        </div>
+
         <div class="nav-right">
             <div class="user-menu">
                 <button id="user-toggle" type="button">
@@ -125,11 +141,13 @@
         document.querySelectorAll("button").forEach(button => {
             button.addEventListener("click", function () {
                 const type = button.getAttribute("type");
-                if (type === null || type === "submit") {
+                const isHamburger = button.id === "hamburger-toggle";
+                if ((type === null || type === "submit") && !isHamburger) {
                     showLoader();
                 }
             });
-        });
+});
+
     });
 </script>
 
@@ -175,5 +193,24 @@
         adjustNavbar();
     });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const hamburger = document.getElementById("hamburger-toggle");
+    const panel = document.getElementById("side-panel");
+    const overlay = document.getElementById("side-overlay");
+
+    hamburger.addEventListener("click", () => {
+        panel.classList.toggle("open");
+        overlay.classList.toggle("show");
+    });
+
+    overlay.addEventListener("click", () => {
+        panel.classList.remove("open");
+        overlay.classList.remove("show");
+    });
+});
+</script>
+
 </body>
 </html>
