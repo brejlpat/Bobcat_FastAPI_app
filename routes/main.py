@@ -83,10 +83,10 @@ async def home(request: Request):
     df = df.fillna("N/A")
     data_list = df.to_dict(orient="records")
     """
+
     return templates.TemplateResponse("home.html", {
         "request": request,
         "title": state.title,
-        #"data_list": data_list,
         "users_amount": users_amount,
         "is_connected": state.is_connected,
         "line": line
