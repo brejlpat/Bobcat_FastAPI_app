@@ -2,3 +2,7 @@
 venv
 config.ini
 DEVICES
+.env
+certs_dbr
+certs
+__pychache__
