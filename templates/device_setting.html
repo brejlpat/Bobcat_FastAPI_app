@@ -19,6 +19,9 @@
         <label for="image">Upload image (.png):</label>
         <input type="file" id="image" name="image" accept="image/png" required>
 
+        <!-- hidden input pro 'line' -->
+        <input type="hidden" name="line" value="{{ line }}">
+
         <button type="submit" class="centered-button">Create device</button>
     </form>
 </div>

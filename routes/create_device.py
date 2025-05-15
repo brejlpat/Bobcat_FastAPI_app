@@ -1,30 +1,34 @@
-from fastapi import APIRouter, Request, Form, UploadFile, File
+from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
 from fastapi.templating import Jinja2Templates
+from routes.auth import get_current_user, User
 import requests
 import json
 import os
 import shutil
 
 router = APIRouter()
-
 templates = Jinja2Templates(directory="templates")
-
-
-def check_session(request: Request):
-    return "user_id" in request.session
 
 
 @router.post("/channel")
 async def channel(
         request: Request,
-        driver: str = Form(...)
+        driver: str = Form(...),
+        user: User = Depends(get_current_user)
 ):
-    if not check_session(request):
-        return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": "Please log in first!"})
+    """
+    Zobrazí nastavení kanálu.
+
+    English:
+    Displays channel settings.
+    """
+
     status_message = f"You´ve selected driver: {driver}"
     return templates.TemplateResponse("channel_setting.html",
-                                      {"request": request, "driver": driver, "status_message": status_message})
+                                      {"request": request, "driver": driver, "status_message": status_message,
+                                       "username": user.username,
+                                       "role": user.role
+                                       })
 
 
 @router.post("/create_channel")
@@ -33,15 +37,19 @@ async def create_channel(
         channel_name: str = Form(...),
         driver: str = Form(...),
         endpoint_url: str = Form(...),
-        description: str = Form("")
+        description: str = Form(""),
+        user: User = Depends(get_current_user)
 ):
-    if not check_session(request):
-        return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": "Please log in first!"})
-    # KEPServerEX REST API endpoint
+    """
+    Vytvoří kanál OPC UA Client.
+
+    English:
+    Creates an OPC UA Client channel.
+    """
+
+    # URL pro API KEPServerEX
     url = "http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels"
 
-    # Přihlášení
     username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
@@ -60,7 +68,6 @@ async def create_channel(
         "opcuaclient.CHANNEL_UA_SESSION_WATCHDOG_TIMEOUT": 5
     }
 
-    # 📤 Odeslání požadavku
     response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
 
     if response.status_code == 201:
@@ -72,7 +79,9 @@ async def create_channel(
         "request": request,
         "status_message": status_message,
         "channel_name": channel_name,
-        "driver": driver
+        "driver": driver,
+        "username": user.username,
+        "role": user.role
     })
 
 
@@ -83,19 +92,24 @@ async def create_OPC_UA_CLIENT_device(
         channel_name: str = Form(...),
         driver: str = Form(...),
         description: str = Form(...),
-        image: UploadFile = File(...)
+        line: str = Form(...),
+        image: UploadFile = File(...),
+        user: User = Depends(get_current_user)
 ):
-    if not check_session(request):
-        return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": "Please log in first!"})
+    """
+    Vytvoří zařízení OPC UA Client.
+
+    English:
+    Creates an OPC UA Client device.
+    """
+
+    # URL pro API KEPServerEX
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
 
-    # Přihlašovací údaje pro REST API Kepware
     username = "DBR_Automation"
     password = "Kepserver_test1"
     headers = {"Content-Type": "application/json"}
 
-    # Uložení obrázku zařízení jako static/device_images/<device_name>.png
     image_dir = "static/images/DEVICES"
     os.makedirs(image_dir, exist_ok=True)
     image_path = os.path.join(image_dir, f"{channel_name}.png")
@@ -103,7 +117,6 @@ async def create_OPC_UA_CLIENT_device(
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
-    # JSON konfigurace pro OPC UA klienta s nastavením bezpečnosti
     payload = {
         "common.ALLTYPES_NAME": device_name,
         "common.ALLTYPES_DESCRIPTION": description,
@@ -147,80 +160,21 @@ async def create_OPC_UA_CLIENT_device(
         "redundancy.DEVICE_TRIGGER_TIMEOUT": 10000
     }
 
-    # Odeslání požadavku na REST API Kepware
-    response = requests.post(
-        url,
-        headers=headers,
-        data=json.dumps(payload),
-        auth=(username, password)
-    )
+    response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
 
-    # Výsledek
     if response.status_code == 201:
         status_message = f"✅ Device '{device_name}' was successfully created in channel '{channel_name}'!"
     else:
         status_message = f"❌ Error when creating the device: {response.status_code}"
 
-    return templates.TemplateResponse("device.html", {"request": request,
-                                                      "status_message": status_message,
-                                                      "device_name": device_name,
-                                                      "channel_name": channel_name,
-                                                      "line": request.session["line"]})
+    state.line = line
 
-
-@router.post("/create_tag")
-async def create_tag(
-        request: Request,
-        channel_name: str = Form(...),
-        device_name: str = Form(...),
-        tag_name: str = Form(...),
-        tag_data_type: int = Form(...),
-        description: str = Form(...)
-):
-    if not check_session(request):
-        return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": "Please log in first!"})
-    url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices/{device_name}/tags"
-
-    # Přihlašovací údaje pro REST API Kepware
-    username = "DBR_Automation"
-    password = "Kepserver_test1"
-    headers = {"Content-Type": "application/json"}
-
-    # JSON konfigurace pro OPC UA klienta s nastavením bezpečnosti
-    payload = {
-        "common.ALLTYPES_NAME": tag_name,
-        "common.ALLTYPES_DESCRIPTION": description,
-        "servermain.TAG_ADDRESS": f"ns=3;s={channel_name}.{device_name}.{tag_name}",
-        "servermain.TAG_DATA_TYPE": int(tag_data_type),
-        "servermain.TAG_READ_WRITE_ACCESS": 1,
-        "servermain.TAG_SCAN_RATE_MILLISECONDS": 100,
-        "servermain.TAG_AUTOGENERATED": False,
-        "servermain.TAG_SCALING_TYPE": 0,
-        "servermain.TAG_SCALING_RAW_LOW": 0,
-        "servermain.TAG_SCALING_RAW_HIGH": 1000,
-        "servermain.TAG_SCALING_SCALED_DATA_TYPE": 9,
-        "servermain.TAG_SCALING_SCALED_LOW": 0,
-        "servermain.TAG_SCALING_SCALED_HIGH": 1000,
-        "servermain.TAG_SCALING_CLAMP_LOW": False,
-        "servermain.TAG_SCALING_CLAMP_HIGH": False,
-        "servermain.TAG_SCALING_NEGATE_VALUE": False,
-        "servermain.TAG_SCALING_UNITS": ""
-    }
-
-    # Odeslání požadavku na REST API Kepware
-    response = requests.post(
-        url,
-        headers=headers,
-        data=json.dumps(payload),
-        auth=(username, password)
-    )
-
-    # Výsledek
-    if response.status_code == 201:
-        status_message = f"Tag created in '{device_name}' in channel '{channel_name}'!"
-    else:
-        status_message = f"Failed to create the tag: {response.status_code}"
-
-    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
-                                                      "line": request.session["line"]})
+    return templates.TemplateResponse("device.html", {
+        "request": request,
+        "status_message": status_message,
+        "device_name": device_name,
+        "channel_name": channel_name,
+        "line": state.line,
+        "username": user.username,
+        "role": user.role
+    })
