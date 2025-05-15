@@ -14,13 +14,18 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Načtení .env souboru
+# Load the .env file
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+# Inicializace FastAPI routeru a šablon
+# Initialization of FastAPI router and templates
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 # DB připojení
+# DB connection
 conn = psycopg2.connect(
     host="localhost",
     dbname="postgres",
@@ -31,17 +36,20 @@ conn = psycopg2.connect(
 cur = conn.cursor(cursor_factory=DictCursor)
 
 # LDAP parametry
+# LDAP parameters
 LDAP_SERVER = 'ldaps://corp.doosan.com'
 BASE_DN = 'DC=corp,DC=doosan,DC=com'
 
 # JWT konfigurace
+# JWT configuration
 SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 125
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
+# Definice modelů pro uživatele a tokeny
+# Definition of models for users and tokens
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -58,9 +66,17 @@ class TokenData(BaseModel):
 
 
 def authenticate_ldap_user(username: str, password: str):
+    """
+    Autentizuje uživatele pomocí LDAP serveru.
+    Pokud je uživatel úspěšně autentizován, vrátí jeho email a username v dictionary.
+
+    English:
+    Authenticates a user using the LDAP server.
+    If the user is successfully authenticated, returns their email and username in a dictionary.
+    """
     try:
-        server = Server(LDAP_SERVER, get_info=None)
-        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
+        server = Server(LDAP_SERVER, get_info=None, connect_timeout=1)
+        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, receive_timeout=1)
         if not conn_ldap.bind():
             return None
 
@@ -75,35 +91,59 @@ def authenticate_ldap_user(username: str, password: str):
 
 
 def get_user_from_db(email: str):
+    """
+    Získá uživatelská data z DB podle emailu.
+
+    English:
+    Retrieves user data from the database by email.
+    """
+
     cur.execute("SELECT * FROM users_ad WHERE email = %s", (email,))
     return cur.fetchone()
 
 
-def create_access_token(data: dict, expires_delta: timedelta = None):
+def create_access_token(data: dict):
     """
-    Vytvoří JWT token, který expiruje po `expires_delta` (nebo 5 minut defaultně).
-    Používá správný Unix timestamp v klíči `exp`.
+    Vytvoří JWT token, který expiruje po `timedelta`).
+    Používá Unix timestamp v klíči `exp`.
+    Kvůli časovému pásmu se přičítá 120 minut.
+    Vrací token jako string.
+
+    English:
+    Creates a JWT token that expires after `timedelta`.
+    Uses Unix timestamp in the `exp` key.
+    Due to the timezone, 120 minutes are added.
+    Returns the token as a string.
     """
+
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=120) + timedelta(minutes=30)
     exp_timestamp = int(expire.timestamp())
 
+    #print(f"Token expire datetime: {expire}")
+
     to_encode.update({"exp": exp_timestamp})
 
-    print(f"📦 JWT payload: {to_encode} (vyprší v {expire.isoformat()} UTC)")
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
 def get_current_user(access_token: str = Cookie(None)) -> User:
+    """
+    Získá aktuálního uživatele z JWT tokenu.
+    Pokud token neexistuje nebo je neplatný, vyhodí HTTPException.
+    Pokud je vše OK, vrátí username, role.
+
+    English:
+    Retrieves the current user from the JWT token.
+    If the token does not exist or is invalid, raises HTTPException.
+    If everything is OK, returns username and role.
+    """
     if not access_token:
         raise HTTPException(status_code=401, detail="Not authenticated (no cookie)")
 
     try:
         token = access_token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-        print("📦 JWT payload:", payload)
-
         username: str = payload.get("username")
         role: str = payload.get("role")
 
@@ -112,20 +152,41 @@ def get_current_user(access_token: str = Cookie(None)) -> User:
 
         return User(username=username, role=role)
     except ExpiredSignatureError:
-        print("❌ Token expired")
         raise HTTPException(status_code=401, detail="Token expired")
     except JWTError as e:
-        print("❌ JWT decode error:", e)
         raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
+    """
+    Zobrazí přihlašovací stránku.
+
+    English:
+    Displays the login page.
+    """
     return templates.TemplateResponse("login.html", {"request": request})
 
 
 @router.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
+    """
+    Zpracovává přihlašovací formulář.
+    Ověřuje uživatelské jméno a heslo pomocí LDAP serveru.
+    Pokud je uživatel úspěšně autentizován, zkontroluje se, zda je v DB.
+    Pokud je uživatel v DB, vytvoří se JWT token a nastaví se cookie.
+    Pokud uživatel není v DB, zobrazí se chybová hláška.
+    Pokud uživatel není autentizován pomocí LDAP, zobrazí se chybová hláška.
+
+    English:
+    Processes the login form.
+    Verifies the username and password using the LDAP server.
+    If the user is successfully authenticated, checks if they are in the database.
+    If the user is in the database, creates a JWT token and sets a cookie.
+    If the user is not in the database, displays an error message.
+    If the user is not authenticated using LDAP, displays an error message.
+    """
+
     ldap_user = authenticate_ldap_user(username, password)
     if not ldap_user:
         return templates.TemplateResponse("login.html", {
@@ -140,57 +201,48 @@ async def login_post(request: Request, username: str = Form(...), password: str 
             "status_message": "User not authorized in application"
         })
 
-    # Aktualizace username pokud chybí
+    # Vložení username do DB pokud chybí
+    # Insert username into DB if missing
     if not db_user["username"]:
         cur.execute("UPDATE users_ad SET username = %s WHERE email = %s",
                     (ldap_user["username"], ldap_user["email"]))
         conn.commit()
 
+    # Vytvoření JWT tokenu
+    # Creating JWT token
     access_token = create_access_token(
-        data={"username": ldap_user["username"], "role": db_user["role"]},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES+120)
+        data={"username": ldap_user["username"], "role": db_user["role"]}
     )
 
-    print(f"Nový token: {access_token}\nExpires in {ACCESS_TOKEN_EXPIRE_MINUTES}")
-
+    # Přesměrování na domovskou stránku, pokud je autentizace úspěšná
+    # Redirecting to the home page if authentication is successful
     response = templates.TemplateResponse("home.html", {
         "request": request,
         "username": ldap_user["username"],
         "role": db_user["role"],
         "status_message": "Login successful ✅"
     })
+    # Nastavení cookie s tokenem
+    # Setting cookie with token
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # True pokud nasadíš na HTTPS
+        secure=False,  # True pokud nasadíš na HTTPS / True if you deploy on HTTPS
         samesite="lax"
     )
 
     return response
 
 
-@router.post("/token", response_model=Token)
-async def login_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    ldap_user = authenticate_ldap_user(form_data.username, form_data.password)
-    if not ldap_user:
-        raise HTTPException(status_code=401, detail="Invalid credentials (LDAP)")
-
-    db_user = get_user_from_db(ldap_user["email"])
-    if not db_user:
-        raise HTTPException(status_code=403, detail="Access denied – not in app DB")
-
-    if not db_user["username"]:
-        cur.execute("UPDATE users_ad SET username = %s WHERE email = %s",
-                    (ldap_user["username"], ldap_user["email"]))
-        conn.commit()
-
-    access_token = create_access_token(data={"username": ldap_user["username"], "role": db_user["role"]})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
 @router.get("/me")
 async def get_my_profile(user: TokenData = Depends(get_current_user)):
+    """
+    Získá aktuálního uživatele z JWT tokenu.
+
+    English:
+    Retrieves the current user from the JWT token.
+    """
     return {
         "username": user.username,
         "role": user.role,
@@ -199,11 +251,30 @@ async def get_my_profile(user: TokenData = Depends(get_current_user)):
 
 @router.get("/register", response_class=HTMLResponse)
 async def register_get(request: Request):
+    """
+    Zobrazí registrační stránku.
+
+    English:
+    Displays the registration page.
+    """
     return templates.TemplateResponse("register.html", {"request": request})
 
 
 @router.post("/register")
 async def register_post(request: Request, email: str = Form(...)):
+    """
+    Zpracovává registrační formulář.
+    Odesílá email administrátorovi s žádostí o přístup.
+    Pokud je vše v pořádku, zobrazí se potvrzovací hláška.
+    Pokud dojde k chybě, zobrazí se chybová hláška.
+
+    English:
+    Processes the registration form.
+    Sends an email to the administrator with a request for access.
+    If everything is OK, displays a confirmation message.
+    If an error occurs, displays an error message.
+    """
+
     try:
         msg = EmailMessage()
         msg['Subject'] = 'New Access Request – Doosan Bobcat Web Application'
@@ -233,8 +304,19 @@ async def register_post(request: Request, email: str = Form(...)):
                                                      "status_message": status_message})
 
 
-@router.get("/logout")
+@router.get("/logout", response_class=HTMLResponse)
 async def logout(request: Request):
+    """
+    Zpracovává odhlášení uživatele.
+    Odstraní cookie s JWT tokenem a přesměruje na přihlašovací stránku.
+
+    English:
+    Processes user logout.
+    Removes the cookie with the JWT token and redirects to the login page.
+    """
+
     status_message = "Logout successful ✅"
-    return templates.TemplateResponse("login.html", {"request": request, "status_message": status_message})
+    response = templates.TemplateResponse("login.html", {"request": request, "status_message": status_message})
+    response.delete_cookie("access_token")
+    return repsonse
 
