@@ -59,7 +59,7 @@ class TokenData(BaseModel):
 
 def authenticate_ldap_user(username: str, password: str):
     try:
-        server = Server(LDAP_SERVER, get_info=ALL)
+        server = Server(LDAP_SERVER, get_info=None)
         conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
         if not conn_ldap.bind():
             return None
@@ -85,7 +85,7 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     Používá správný Unix timestamp v klíči `exp`.
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=125))
+    expire = datetime.utcnow() + timedelta(minutes=120) + timedelta(minutes=30)
     exp_timestamp = int(expire.timestamp())
 
     to_encode.update({"exp": exp_timestamp})
@@ -99,7 +99,6 @@ def get_current_user(access_token: str = Cookie(None)) -> User:
         raise HTTPException(status_code=401, detail="Not authenticated (no cookie)")
 
     try:
-        #token = access_token.replace("Bearer ", "")
         token = access_token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
@@ -149,7 +148,7 @@ async def login_post(request: Request, username: str = Form(...), password: str 
 
     access_token = create_access_token(
         data={"username": ldap_user["username"], "role": db_user["role"]},
-        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES+120)
     )
 
     print(f"Nový token: {access_token}\nExpires in {ACCESS_TOKEN_EXPIRE_MINUTES}")
