@@ -17,12 +17,22 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 # Stav připojení
+# Connection state
 opc_client = None
 status_message = "❌ Disconnected"
 
 
 @router.get("/lines", response_class=HTMLResponse)
 async def devices(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí obrazovku pro mapování zařízení.
+    Uživatel si vybere linku a zobrazí se mu zařízení na této lince.
+
+    English:
+    Displays the device mapping screen.
+    The user selects a line and the devices on that line are displayed.
+    """
+
     await disconnect_opcua(request)
     state.title = "Device Mapping - Lines"
 
@@ -36,6 +46,13 @@ async def devices(request: Request, user: User = Depends(get_current_user)):
 
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí obrazovku pro mapování zařízení na konkrétní lince.
+
+    English:
+    Displays the device mapping screen for a specific line.
+    """
+
     global status_message
     line = request.query_params.get("line", "❌")
     state.line = line
@@ -54,6 +71,13 @@ async def device(request: Request, user: User = Depends(get_current_user)):
 
 @router.post("/connect_opcua")
 async def connect_opcua(request: Request, user: User = Depends(get_current_user)):
+    """
+    Připojí se k OPC UA serveru a načte zařízení na vybrané lince.
+
+    English:
+    Connects to the OPC UA server and loads devices on the selected line.
+    """
+
     global opc_client, status_message
 
     state.line = request.query_params.get("line", "❌")
@@ -109,6 +133,13 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
 
 @router.post("/disconnect_opcua")
 async def disconnect_opcua(request: Request):
+    """
+    Odpojí se od OPC UA serveru.
+
+    English:
+    Disconnects from the OPC UA server.
+    """
+
     global opc_client, status_message
     state.title = f"Device Mapping - Lines"
     if opc_client:
@@ -121,6 +152,15 @@ async def disconnect_opcua(request: Request):
 
 @router.get("/channel_setting", response_class=HTMLResponse)
 async def channel_setting(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí obrazovku pro nastavení kanálu.
+    Uživatel si vybere kanál a zobrazí se mu veškeré nastavení na tomto kanálu.
+
+    English:
+    Displays the screen for channel settings.
+    The user selects a channel and all settings on that channel are displayed.
+    """
+
     state.title = "Device Mapping - Driver Setting"
     line = request.query_params.get("line", "❌")
     state.line = line
@@ -132,11 +172,29 @@ async def channel_setting(request: Request, user: User = Depends(get_current_use
 
 
 def get_is_connected():
+    """
+    Funkce pro získání stavu připojení.
+
+    English:
+    Function to get the connection status.
+    """
+
     return state.is_connected
 
 
 @router.get("/device_details")
 async def device_details(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí podrobnosti o zařízení.
+    Uživatel si může zobrazit všechny tagy pro zařízení.
+    Uživatel může upravit zařízení & kanál.
+
+    English:
+    Displays device details.
+    The user can view all tags for the device.
+    The user can edit the device & channel.
+    """
+
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     line = request.query_params.get("line", "❌")
@@ -152,10 +210,8 @@ async def device_details(request: Request, user: User = Depends(get_current_user
                             )
     device_data = response.json()
     if device_data:
-        device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")
-    print("#################################")
-    print(device_id)
-    print("#################################")
+        device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")     # IP address
+
     device_info = {
         "channel": channel,
         "device": device,
@@ -175,6 +231,14 @@ async def device_details(request: Request, user: User = Depends(get_current_user
 
 @router.get("/delete_device")
 async def delete_device(request: Request, user: User = Depends(get_current_user)):
+    """
+    Smaže zařízení z kanálu.
+    Je potřeba napsat Confirm do okna pro potvrzení smazání (JavaScript).
+
+    English:
+    Deletes the device from the channel.
+    It is necessary to write Confirm in the confirmation window to confirm deletion.
+    """
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
 
@@ -204,6 +268,13 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
 
 @router.get("/show_tags", response_class=HTMLResponse)
 async def show_tags(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí tagy pro konkrétní zařízení.
+
+    English:
+    Displays tags for a specific device.
+    """
+
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
@@ -295,12 +366,19 @@ async def show_tags(request: Request, user: User = Depends(get_current_user)):
 
 @router.get("/cancel_tags")
 async def cancel_tags(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zavře tagy pro konkrétní zařízení.
+
+    English:
+    Closes tags for a specific device.
+    """
+
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
 
     tags_with_values = []
-    status_message = "Tags cleared."
+    status_message = "Tags closed."
 
     device_info = {
         "channel": channel,
@@ -321,6 +399,15 @@ async def cancel_tags(request: Request, user: User = Depends(get_current_user)):
 
 @router.get("/edit_device", response_class=HTMLResponse)
 async def edit_device_get(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí obrazovku pro úpravu zařízení.
+    Uživatel si vybere zařízení a zobrazí se mu veškeré nastavení na tomto zařízení.
+
+    English:
+    Displays the screen for editing the device.
+    The user selects a device and all settings on that device are displayed.
+    """
+
     global device_payload
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
@@ -358,6 +445,17 @@ async def edit_device_get(request: Request, user: User = Depends(get_current_use
 
 @router.post("/edit_device")
 async def edit_device_post(request: Request, user: User = Depends(get_current_user)):
+    """
+    Endpoint pro úpravu zařízení.
+    Všechny změny z formuláře se porovnají s payloadem a přidají se do payloadu.
+    Poté se odešle PATCH požadavek na úpravu zařízení.
+
+    English:
+    Endpoint for editing the device.
+    All changes from the form are compared with the payload and added to the payload.
+    Then a PATCH request is sent to edit the device.
+    """
+
     global device_payload
     form = await request.form()
 
@@ -415,6 +513,14 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
 
 @router.get("/edit_channel", response_class=HTMLResponse)
 async def edit_channel_get(request: Request, user: User = Depends(get_current_user)):
+    """
+        Zobrazí obrazovku pro úpravu kanálu.
+        Uživatel si vybere kanál a zobrazí se mu veškeré nastavení.
+
+        English:
+        Displays the screen for editing the channel.
+        The user selects a channel and all settings on that channel are displayed.
+        """
     global channel_payload
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
@@ -453,6 +559,16 @@ async def edit_channel_get(request: Request, user: User = Depends(get_current_us
 
 @router.post("/edit_channel")
 async def edit_channel_post(request: Request, user: User = Depends(get_current_user)):
+    """
+        Endpoint pro úpravu kanálu.
+        Všechny změny z formuláře se porovnají s payloadem a přidají se do payloadu.
+        Poté se odešle PATCH požadavek na úpravu kanálu.
+
+        English:
+        Endpoint for editing the channel.
+        All changes from the form are compared with the payload and added to the payload.
+        Then a PATCH request is sent to edit the channel.
+    """
     global channel_payload
     form = await request.form()
 
