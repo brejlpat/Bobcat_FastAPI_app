@@ -1141,3 +1141,15 @@ tr:hover td {
 .side-overlay.show {
     display: block;
 }
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+    margin-left: 10px;
+}
+.copy-btn:hover {
+    color: #78de20;
+    background: none;
+}

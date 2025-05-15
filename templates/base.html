@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const target = link.getAttribute("target");
             const id = link.getAttribute("id");
 
-            if (!href.startsWith("#") && target !== "_blank" && id !== "custom-back-button") {
+            if (!href.startsWith("#") && target !== "_blank" && id !== "custom-back-button" && id !== "copy-btn") {
                 showLoader();
             }
         });

@@ -10,7 +10,11 @@
     <div class="device-details">
         <h2>Channel: {{ device_info.channel }}</h2>
         <h3>Device: {{ device_info.device }}</h3>
-        <h3>IP address: {{ device_info.device_id }}</h3>
+        <h3>
+            IP address: <span id="device-ip">{{ device_info.device_id }}</span>
+            <button type="button" onclick="copyToClipboard(event)" class="copy-btn" id="copy-btn" title="Copy to clipboard">📋</button>
+        </h3>
+
         <div class="icons-section">
             <a href="/device_mapping/show_tags?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Show tags</a>
             <a href="/device_mapping/edit_device?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Edit device</a>
@@ -65,5 +69,20 @@
   }
 </script>
 
+<script>
+function copyToClipboard(event) {
+    event.preventDefault();       // 🛡️ jistota
+    event.stopPropagation();      // 🛡️ zabrání propadnutí na body listener
+    const ip = document.getElementById("device-ip").innerText;
+    navigator.clipboard.writeText(ip).then(() => {
+        const toast = document.createElement("div");
+        toast.innerText = "Copied to clipboard!";
+        toast.className = "toast";
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    });
+}
+
+</script>
 
 {% endblock %}
