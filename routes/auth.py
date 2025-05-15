@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from pydantic import BaseModel
 from jose import JWTError, jwt
+from jose.exceptions import ExpiredSignatureError
 from datetime import datetime, timedelta
 from fastapi.templating import Jinja2Templates
 from ldap3 import Server, Connection, ALL, NTLM
@@ -29,8 +30,8 @@ templates = Jinja2Templates(directory="templates")
 conn = psycopg2.connect(
     host="localhost",
     dbname="postgres",
-    user="postgres",
-    password="postgres",
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
     port="5432"
 )
 cur = conn.cursor(cursor_factory=DictCursor)
@@ -292,7 +293,7 @@ async def register_post(request: Request, email: str = Form(...)):
         )
 
         with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
-            smtp.login("webtest.mail@seznam.cz", "Webtest-123")
+            smtp.login("webtest.mail@seznam.cz", os.getenv("mail_password"))
             smtp.send_message(msg)
 
         status_message = "Request sent to administrator."

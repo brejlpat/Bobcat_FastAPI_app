@@ -3,8 +3,15 @@ from fastapi.templating import Jinja2Templates
 from routes.auth import get_current_user, User
 import requests
 import json
-import os
 import shutil
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Načtení .env souboru
+# Load the .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -50,8 +57,8 @@ async def create_channel(
     # URL pro API KEPServerEX
     url = "http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels"
 
-    username = "DBR_Automation"
-    password = "Kepserver_test1"
+    username = os.getenv("kepserver_user")
+    password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
     payload = {
@@ -106,8 +113,8 @@ async def create_OPC_UA_CLIENT_device(
     # URL pro API KEPServerEX
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel_name}/devices"
 
-    username = "DBR_Automation"
-    password = "Kepserver_test1"
+    username = os.getenv("kepserver_user")
+    password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
     image_dir = "static/images/DEVICES"

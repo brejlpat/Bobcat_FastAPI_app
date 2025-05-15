@@ -7,6 +7,14 @@ from psycopg2.extras import DictCursor
 import pandas as pd
 from email.message import EmailMessage
 import smtplib
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Načtení .env souboru
+# Load the .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -15,8 +23,8 @@ templates = Jinja2Templates(directory="templates")
 conn = psycopg2.connect(
     host="localhost",
     dbname="postgres",
-    user="postgres",
-    password="postgres",
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
     port="5432"
 )
 cur = conn.cursor(cursor_factory=DictCursor)
@@ -172,7 +180,7 @@ async def add_user(request: Request, email: str = Form(...), user: User = Depend
         Bobcat Automation Team""")
 
         with smtplib.SMTP_SSL("smtp.seznam.cz", 465) as smtp:
-            smtp.login("webtest.mail@seznam.cz", "Webtest-123")
+            smtp.login("webtest.mail@seznam.cz", os.getenv("mail_password"))
             smtp.send_message(msg)
 
         msg = "User added successfully ✅"

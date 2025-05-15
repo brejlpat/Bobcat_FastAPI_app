@@ -7,11 +7,18 @@ from opcua import Client, ua
 from opcua.ua.uaerrors import UaError
 import requests
 from requests.auth import HTTPBasicAuth
-import os
 import json
 import shutil
 from app_state import state
 from routes.auth import get_current_user, User
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Načtení .env souboru
+# Load the .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -92,8 +99,8 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
         )
 
         opc_client.application_uri = "urn:FreeOpcUa:python:client"
-        opc_client.set_user("DBR_Automation")
-        opc_client.set_password("Kepserver_test1")
+        opc_client.set_user(os.getenv("kepserver_user"))
+        opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
 
         state.is_connected = True
@@ -205,7 +212,7 @@ async def device_details(request: Request, user: User = Depends(get_current_user
     state.title = f"{channel}"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(url_id,
-                            auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
+                            auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                             headers={"Content-Type": "application/json"}
                             )
     device_data = response.json()
@@ -245,7 +252,7 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     state.title = f"Device Mapping - {state.line} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
     response = requests.delete(url_id,
-                               auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
+                               auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                                headers={"Content-Type": "application/json"}
                                )
 
@@ -416,7 +423,7 @@ async def edit_device_get(request: Request, user: User = Depends(get_current_use
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
     response = requests.get(
         url,
-        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
+        auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
         headers={"Content-Type": "application/json"}
     )
 
@@ -482,8 +489,8 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
 
     # Přihlašovací údaje
-    username = "DBR_Automation"
-    password = "Kepserver_test1"
+    username = os.getenv("kepserver_user")
+    password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
     # Odeslání požadavku na úpravu (PATCH = částečná změna)
@@ -529,7 +536,7 @@ async def edit_channel_get(request: Request, user: User = Depends(get_current_us
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
     response = requests.get(
         url,
-        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1"),
+        auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
         headers={"Content-Type": "application/json"}
     )
 
@@ -609,7 +616,7 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         url,
         headers={"Content-Type": "application/json"},
         data=json.dumps(payload),
-        auth=HTTPBasicAuth("DBR_Automation", "Kepserver_test1")
+        auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password"))
     )
 
     if response.status_code == 200:

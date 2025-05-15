@@ -8,6 +8,14 @@ from psycopg2.extras import DictCursor
 from app_state import state
 from opcua import Client
 from routes.auth import get_current_user, User
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Načtení .env souboru
+# Load the .env file
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -17,8 +25,8 @@ templates = Jinja2Templates(directory="templates")
 conn = psycopg2.connect(
     host="localhost",
     dbname="postgres",
-    user="postgres",
-    password="postgres",
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
     port="5432"
 )
 cur = conn.cursor(cursor_factory=DictCursor)
@@ -67,8 +75,8 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
         )
 
         opc_client.application_uri = "urn:FreeOpcUa:python:client"
-        opc_client.set_user("DBR_Automation")
-        opc_client.set_password("Kepserver_test1")
+        opc_client.set_user(os.getenv("kepserver_user"))
+        opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
 
         state.is_connected = True
