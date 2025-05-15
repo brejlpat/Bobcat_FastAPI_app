@@ -14,7 +14,7 @@ import pprint
 load_dotenv()
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("APP_SECRET_KEY"))
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")

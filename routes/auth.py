@@ -1,11 +1,21 @@
-from fastapi import APIRouter, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import APIRouter, Request, Form, status, Depends, HTTPException, Cookie
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from pydantic import BaseModel
+from jose import JWTError, jwt
+from datetime import datetime, timedelta
 from fastapi.templating import Jinja2Templates
 from ldap3 import Server, Connection, ALL, NTLM
 from email.message import EmailMessage
 import smtplib
 import psycopg2
 from psycopg2.extras import DictCursor
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -24,59 +34,155 @@ cur = conn.cursor(cursor_factory=DictCursor)
 LDAP_SERVER = 'ldaps://corp.doosan.com'
 BASE_DN = 'DC=corp,DC=doosan,DC=com'
 
+# JWT konfigurace
+SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class User(BaseModel):
+    username: str
+    role: str
+
+
+class TokenData(BaseModel):
+    username: str
+    role: str
+
+
+def authenticate_ldap_user(username: str, password: str):
+    try:
+        server = Server(LDAP_SERVER, get_info=ALL)
+        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
+        if not conn_ldap.bind():
+            return None
+
+        conn_ldap.search(BASE_DN, f"(sAMAccountName={username})", attributes=["cn", "mail"])
+        if not conn_ldap.entries:
+            return None
+
+        user = conn_ldap.entries[0]
+        return {"email": user.mail.value, "username": user.cn.value}
+    except Exception:
+        return None
+
+
+def get_user_from_db(email: str):
+    cur.execute("SELECT * FROM users_ad WHERE email = %s", (email,))
+    return cur.fetchone()
+
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_current_user(access_token: str = Cookie(None)) -> User:
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated (no cookie)")
+
+    try:
+        token = access_token.replace("Bearer ", "")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        print("📦 JWT payload:", payload)
+
+        username: str = payload.get("username")
+        role: str = payload.get("role")
+
+        if username is None or role is None:
+            raise HTTPException(status_code=401, detail="Invalid token content")
+
+        return User(username=username, role=role)
+
+    except JWTError as e:
+        print("❌ JWT decode error:", e)
+        raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@router.post("/login")
+@router.post("/login", response_class=HTMLResponse)
 async def login_post(request: Request, username: str = Form(...), password: str = Form(...)):
-    try:
-        request.session.clear()
-        # kontrola připojení k LDAP
-        server = Server(LDAP_SERVER, get_info=ALL)
-        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, auto_bind=True)
+    ldap_user = authenticate_ldap_user(username, password)
+    if not ldap_user:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "status_message": "Invalid LDAP credentials"
+        })
 
-        if not conn_ldap.bind():
-            raise Exception("Bind failed")
+    db_user = get_user_from_db(ldap_user["email"])
+    if not db_user:
+        return templates.TemplateResponse("login.html", {
+            "request": request,
+            "status_message": "User not authorized in application"
+        })
 
-        # kontrola existence uživatele v LDAP
-        conn_ldap.search(BASE_DN, f"(sAMAccountName={username})", attributes=['cn', 'mail'])
-        if not conn_ldap.entries:
-            raise Exception("LDAP user not found")
+    # Aktualizace username pokud chybí
+    if not db_user["username"]:
+        cur.execute("UPDATE users_ad SET username = %s WHERE email = %s",
+                    (ldap_user["username"], ldap_user["email"]))
+        conn.commit()
 
-        # získání údajů o uživateli
-        ldap_user = conn_ldap.entries[0]
-        email = ldap_user.mail.value
-        full_name = ldap_user.cn.value
+    access_token = create_access_token(
+        data={"username": ldap_user["username"], "role": db_user["role"]},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
 
-        # kontrola v databázi (povolení přístupu)
-        cur.execute("SELECT * FROM users_ad WHERE email = %s", (email,))
-        user = cur.fetchone()
+    response = templates.TemplateResponse("home.html", {
+        "request": request,
+        "username": ldap_user["username"],
+        "role": db_user["role"],
+        "status_message": "Login successful ✅"
+    })
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        secure=False,  # True pokud nasadíš na HTTPS
+        samesite="lax"
+    )
 
-        if not user:
-            status_message = "You don´t have access to the application. Please contact the administrator."
-            return templates.TemplateResponse("login.html", {"request": request,
-                                                             "status_message": status_message})
+    return response
 
-        # aktualizace username pokud chybí
-        if not user["username"]:
-            cur.execute("UPDATE users_ad SET username = %s WHERE email = %s", (full_name, email))
-            conn.commit()
 
-        request.session["user_id"] = user["id"]
-        request.session["username"] = full_name
-        request.session["role"] = user["role"]
-        request.session["id"] = user["id"]
-        status_message = "Login successful ✅"
-        return templates.TemplateResponse("home.html", {"request": request, "status_message": status_message})
+@router.post("/token", response_model=Token)
+async def login_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    ldap_user = authenticate_ldap_user(form_data.username, form_data.password)
+    if not ldap_user:
+        raise HTTPException(status_code=401, detail="Invalid credentials (LDAP)")
 
-    except Exception as e:
-        status_message = f"Login failed - check your credentials"
-        a = str(e)
-        return templates.TemplateResponse("login.html", {"request": request,
-                                                         "status_message": status_message})
+    db_user = get_user_from_db(ldap_user["email"])
+    if not db_user:
+        raise HTTPException(status_code=403, detail="Access denied – not in app DB")
+
+    if not db_user["username"]:
+        cur.execute("UPDATE users_ad SET username = %s WHERE email = %s",
+                    (ldap_user["username"], ldap_user["email"]))
+        conn.commit()
+
+    access_token = create_access_token(data={"username": ldap_user["username"], "role": db_user["role"]})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/me")
+async def get_my_profile(user: TokenData = Depends(get_current_user)):
+    return {
+        "username": user.username,
+        "role": user.role,
+    }
 
 
 @router.get("/register", response_class=HTMLResponse)
@@ -117,7 +223,6 @@ async def register_post(request: Request, email: str = Form(...)):
 
 @router.get("/logout")
 async def logout(request: Request):
-    request.session.clear()
     status_message = "Logout successful ✅"
     return templates.TemplateResponse("login.html", {"request": request, "status_message": status_message})
 

@@ -57,10 +57,10 @@
             <div class="user-menu">
                 <button id="user-toggle" type="button">
                     <img src="/static/images/user_icon.png" alt="User Icon" class="user-icon">
-                    <span class="username">{{ request.session["username"] }}</span>
+                    <span class="username">{{ username }}</span>
                 </button>
                 <div id="dropdown-menu" class="dropdown-hidden">
-                    {% if request.session["role"] == "admin" %}
+                    {% if role == "admin" %}
                         <a href="/admin/users" class="dropdown-btn">Account Management</a>
                     {% endif %}
                     <a href="/auth/logout" class="dropdown-btn">Logout</a>
