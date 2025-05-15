@@ -13,6 +13,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 # Připojení k PostgreSQL
+# Connection to PostgreSQL
 conn = psycopg2.connect(
     host="localhost",
     dbname="postgres",
@@ -25,16 +26,18 @@ cur = conn.cursor(cursor_factory=DictCursor)
 
 @router.get("/home", response_class=HTMLResponse)
 async def home(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí domovskou obrazovku.
+
+    English:
+    Displays the home screen.
+    """
     state.title = "Home Page"
     line = request.query_params.get("line") or "❌"
-
-    cur.execute("SELECT COUNT(*) FROM users_ad")
-    users_amount = cur.fetchone()
 
     return templates.TemplateResponse("home.html", {
         "request": request,
         "title": state.title,
-        "users_amount": users_amount,
         "is_connected": state.is_connected,
         "line": line,
         "username": user.username,
@@ -44,8 +47,16 @@ async def home(request: Request, user: User = Depends(get_current_user)):
 
 @router.get("/plant_status", response_class=HTMLResponse)
 async def plant_status(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí plán závodu a stav linek.
+
+    English:
+    Displays the plant layout and line status.
+    """
     state.title = "Plant Status Overview"
 
+    # Zde se připojujeme k OPC UA serveru a získáváme hodnoty tagů
+    # Here we connect to the OPC UA server and retrieve tag values
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -70,12 +81,16 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
         channels = root.get_children()
         for ch in channels:
             ch_name = ch.get_browse_name().Name
+            # Potřebujeme channel DBR_SITE_LINE_STATUS
+            # We need channel DBR_SITE_LINE_STATUS
             if ch_name == "DBR_SITE_LINE_STATUS":
                 devices = ch.get_children()
                 for dev in devices:
                     dev_name = dev.get_browse_name().Name
                     if dev_name == "Line_Status":
                         for subfolder in dev.get_children():
+                            # Zde procházíme jednotlivé tagy a vybíráme jenom line_status + ukládáme do listu tags_with_values
+                            # Here we browse through individual tags and select only line_status + save to list tags_with_values
                             if subfolder.get_browse_name().Name == "line_status":
                                 line_status_tags = subfolder.get_variables()
                                 for tag in line_status_tags:
@@ -109,6 +124,14 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
 
 @router.get("/line_detail", response_class=HTMLResponse)
 async def line_detail(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí detailní pohled na linku.
+    Uživatel má možnost procházet jednotlivé zařízení a jejich hodnoty.
+
+    English:
+    Displays a detailed view of the line.
+    The user can browse through individual devices and their values.
+    """
     state.title = "Line Detail"
     line = request.query_params.get("line") or "❌"
 
