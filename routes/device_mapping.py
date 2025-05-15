@@ -37,18 +37,15 @@ async def devices(request: Request, user: User = Depends(get_current_user)):
 @router.get("/device", response_class=HTMLResponse)
 async def device(request: Request, user: User = Depends(get_current_user)):
     global status_message
-    if state.line:
-        line = state.line
-    else:
-        line = request.query_params.get("line", "❌")
-    state.opc_device = opc_devices
-    state.title = f"Device Mapping - {line}"
+    line = request.query_params.get("line", "❌")
+    state.line = line
+    state.title = f"Device Mapping - {state.line}"
     return templates.TemplateResponse("device.html", {
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
-        "opc_devices": opc_devices,
-        "line": line,
+        "opc_devices": state.opc_devices,
+        "line": state.line,
         "title": state.title,
         "username": user.username,
         "role": user.role
@@ -60,7 +57,7 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
     global opc_client, status_message
 
     state.line = request.query_params.get("line", "❌")
-    state.title = f"Device Mapping - {line}"
+    state.title = f"Device Mapping - {state.line}"
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -87,7 +84,7 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
 
     for ch in channels:
         ch_name = ch.get_browse_name().Name
-        if ch_name[0] != "_" and ch_name != "Server" and line in ch_name:
+        if ch_name[0] != "_" and ch_name != "Server" and state.line in ch_name:
             for dev in ch.get_children():
                 dev_name = dev.get_browse_name().Name
                 if dev_name[0] != "_":
@@ -102,7 +99,7 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
-        "opc_devices": opc_devices,
+        "opc_devices": state.opc_devices,
         "title": state.title,
         "line": state.line,
         "username": user.username,
@@ -126,9 +123,10 @@ async def disconnect_opcua(request: Request):
 async def channel_setting(request: Request, user: User = Depends(get_current_user)):
     state.title = "Device Mapping - Driver Setting"
     line = request.query_params.get("line", "❌")
+    state.line = line
 
     return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected,
-                                                              "title": state.title, "line": line,
+                                                              "title": state.title, "line": state.line,
                                                               "username": user.username,
                                                               "role": user.role})
 
@@ -142,7 +140,7 @@ async def device_details(request: Request, user: User = Depends(get_current_user
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
     line = request.query_params.get("line", "❌")
-
+    state.line = line
     if not device:
         pass
 
@@ -169,7 +167,7 @@ async def device_details(request: Request, user: User = Depends(get_current_user
                                                               "status_message": status_message,
                                                               "is_connected": state.is_connected,
                                                               "title": state.title,
-                                                              "line": line,
+                                                              "line": state.line,
                                                               "username": user.username,
                                                               "role": user.role
                                                               })
@@ -210,6 +208,7 @@ async def show_tags(request: Request, user: User = Depends(get_current_user)):
     device = request.query_params.get("device")
     device_id = request.query_params.get("device_id")
     line = request.query_params.get("line", "❌")
+    state.line = line
 
     opc_url = "opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320"
     username = "DBR_Automation"
@@ -288,7 +287,7 @@ async def show_tags(request: Request, user: User = Depends(get_current_user)):
         "device_info": device_info,
         "status_message": status_message,
         "is_connected": state.is_connected,
-        "line": line,
+        "line": state.line,
         "username": user.username,
         "role": user.role
     })

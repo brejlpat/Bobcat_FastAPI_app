@@ -37,7 +37,7 @@ BASE_DN = 'DC=corp,DC=doosan,DC=com'
 # JWT konfigurace
 SECRET_KEY = os.getenv("AUTH_SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 125
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -80,9 +80,17 @@ def get_user_from_db(email: str):
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
+    """
+    Vytvoří JWT token, který expiruje po `expires_delta` (nebo 5 minut defaultně).
+    Používá správný Unix timestamp v klíči `exp`.
+    """
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
-    to_encode.update({"exp": expire})
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=125))
+    exp_timestamp = int(expire.timestamp())
+
+    to_encode.update({"exp": exp_timestamp})
+
+    print(f"📦 JWT payload: {to_encode} (vyprší v {expire.isoformat()} UTC)")
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
@@ -91,7 +99,8 @@ def get_current_user(access_token: str = Cookie(None)) -> User:
         raise HTTPException(status_code=401, detail="Not authenticated (no cookie)")
 
     try:
-        token = access_token.replace("Bearer ", "")
+        #token = access_token.replace("Bearer ", "")
+        token = access_token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
         print("📦 JWT payload:", payload)
@@ -103,7 +112,9 @@ def get_current_user(access_token: str = Cookie(None)) -> User:
             raise HTTPException(status_code=401, detail="Invalid token content")
 
         return User(username=username, role=role)
-
+    except ExpiredSignatureError:
+        print("❌ Token expired")
+        raise HTTPException(status_code=401, detail="Token expired")
     except JWTError as e:
         print("❌ JWT decode error:", e)
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -141,6 +152,8 @@ async def login_post(request: Request, username: str = Form(...), password: str 
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
 
+    print(f"Nový token: {access_token}\nExpires in {ACCESS_TOKEN_EXPIRE_MINUTES}")
+
     response = templates.TemplateResponse("home.html", {
         "request": request,
         "username": ldap_user["username"],
@@ -149,7 +162,7 @@ async def login_post(request: Request, username: str = Form(...), password: str 
     })
     response.set_cookie(
         key="access_token",
-        value=f"Bearer {access_token}",
+        value=access_token,
         httponly=True,
         secure=False,  # True pokud nasadíš na HTTPS
         samesite="lax"
