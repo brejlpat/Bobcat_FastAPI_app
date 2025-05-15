@@ -6,6 +6,7 @@ from .device_mapping import router as device_mapping_router
 from .create_device import router as create_device_router
 
 # Přímo exportujeme routery – prefix přidáme v app.py
+# Directly export the routers – prefix will be added in app.py
 routers = [
     ("auth", auth_router),
     ("admin", admin_router),
