@@ -21,4 +21,4 @@ def convert_heic_to_png(input_folder, output_folder):
 
 
 # Příklad použití
-convert_heic_to_png(r"C:\Users\patrikbrejla\OneDrive - Doosan\DeviceMapping", r"C:\Users\patrikbrejla\BOBCAT_FastAPI\DEVICES")
+convert_heic_to_png(r"C:\Users\patrikbrejla\BOBCAT_FastAPI\HEIC2PNG\input", r"C:\Users\patrikbrejla\BOBCAT_FastAPI\HEIC2PNG\output")

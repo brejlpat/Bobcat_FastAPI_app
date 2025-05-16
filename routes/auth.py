@@ -25,6 +25,27 @@ load_dotenv(dotenv_path=env_path)
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+"""
+Struktura databází / Database structure
+- users_ad
+    - id (auto)
+    - username
+    - email
+    - role
+    - registry_date (auto)
+- login
+    - id (auto)
+    - username
+    - token_expiration
+    - login_date (auto)
+- device_edit
+    - id (auto)
+    - username
+    - project_id
+    - payload (json)
+    - device_edit_date (auto)
+"""
+
 # DB připojení
 # DB connection
 conn = psycopg2.connect(
@@ -104,6 +125,7 @@ def get_user_from_db(email: str):
 
 
 def create_access_token(data: dict):
+    global expire
     """
     Vytvoří JWT token, který expiruje po `timedelta`).
     Používá Unix timestamp v klíči `exp`.
@@ -214,6 +236,12 @@ async def login_post(request: Request, username: str = Form(...), password: str 
     access_token = create_access_token(
         data={"username": ldap_user["username"], "role": db_user["role"]}
     )
+
+    # Zalogování přihlášení uživatele do databáze
+    # Logging user login into the database
+    cur.execute("INSERT INTO login (username, token_expiration) VALUES (%s, %s)",
+                (ldap_user["username"], expire))
+    conn.commit()
 
     # Přesměrování na domovskou stránku, pokud je autentizace úspěšná
     # Redirecting to the home page if authentication is successful

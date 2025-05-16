@@ -7,6 +7,7 @@ import shutil
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from app_state import state
 
 # Načtení .env souboru
 # Load the .env file

@@ -14,11 +14,24 @@ from routes.auth import get_current_user, User
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import psycopg2
+from psycopg2.extras import DictCursor
 
 # Načtení .env souboru
 # Load the .env file
 env_path = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
+
+# DB připojení
+# DB connection
+conn = psycopg2.connect(
+    host="localhost",
+    dbname="postgres",
+    user=os.getenv("db_user"),
+    password=os.getenv("db_password"),
+    port="5432"
+)
+cur = conn.cursor(cursor_factory=DictCursor)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
@@ -441,10 +454,9 @@ async def edit_device_get(request: Request, user: User = Depends(get_current_use
         headers={"Content-Type": "application/json"}
     )
 
-    if response.status_code == 200:
-        device_payload = response.json()
-        project_id = device_payload.get("PROJECT_ID", "❌")
-    else:
+    device_payload = response.json()
+    project_id = device_payload.get("PROJECT_ID", "❌")
+    if not device_payload:
         device_payload = {}
 
     device_info = {
@@ -493,11 +505,21 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     old_name = str(device_payload["common.ALLTYPES_NAME"])
     #print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
-    for key, form_value, payload_value in zip(device_payload.keys(), form.values(), device_payload.values()):
-        form_value_string = str(form_value)
-        payload_value_string = str(payload_value)
-        if form_value_string != payload_value_string:
-            payload[key] = form_value
+    for key, original_value in device_payload.items():
+        # Získáš hodnotu z formuláře jen pokud tam opravdu existuje
+        if key in form:
+            form_value = str(form[key])
+            original_value = str(original_value)
+            if form_value != original_value:
+                payload[key] = form_value
+
+    log_payload = payload.copy()
+    log_payload.pop("PROJECT_ID", None)
+    cur.execute(
+        "INSERT INTO device_edit (username, project_id, payload) VALUES (%s, %s, %s)",
+        (user.username, project_id, json.dumps(log_payload))
+    )
+    conn.commit()
 
     # Endpoint pro úpravu channelu
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
