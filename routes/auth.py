@@ -76,8 +76,8 @@ def authenticate_ldap_user(username: str, password: str):
     If the user is successfully authenticated, returns their email and username in a dictionary.
     """
     try:
-        server = Server(LDAP_SERVER, get_info=None, connect_timeout=1)
-        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, receive_timeout=1)
+        server = Server(LDAP_SERVER, get_info=None, connect_timeout=3)
+        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, receive_timeout=3)
         if not conn_ldap.bind():
             return None
 

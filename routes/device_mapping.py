@@ -207,7 +207,16 @@ async def device_details(request: Request, user: User = Depends(get_current_user
     line = request.query_params.get("line", "❌")
     state.line = line
     if not device:
-        pass
+        url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices"
+        response = requests.get(url_id,
+                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+                                headers={"Content-Type": "application/json"}
+                                )
+        device_data = response.json()
+        if device_data:
+
+            device_id = device_data[0].get("servermain.DEVICE_ID_STRING", "❌")  # IP address
+            device = device_data[0].get("common.ALLTYPES_NAME", "❌")  # Device name
 
     state.title = f"{channel}"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
@@ -228,6 +237,7 @@ async def device_details(request: Request, user: User = Depends(get_current_user
         "device": device,
         "device_id": device_id
     }
+    state.is_connected = True
     status_message = "✅ Device details retrieved successfully."
     return templates.TemplateResponse("device_details.html", {"request": request,
                                                               "device_info": device_info,

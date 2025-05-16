@@ -62,7 +62,7 @@
       const desc = document.createElement("p");
       desc.style.color = "#ddd";
 
-      popupLink.href = `/device_mapping/device?line=${encodeURIComponent(lineName)}&status=ok`;
+      popupLink.href = `/device_mapping/device_details?channel=${encodeURIComponent(lineName)}`;
       popupButton.textContent = `Přejít na ${lineName}`;
       popupLink.innerHTML = '';
       popupLink.appendChild(popupButton);

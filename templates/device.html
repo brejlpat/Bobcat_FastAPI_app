@@ -11,14 +11,6 @@
     </section>
     <h1>{{ line }}</h1>
     <h2>KEPserverEX</h2>
-    <!-- <p><strong>Status:</strong> {{ status_message }}</p> -->
-
-    {% if request.session.get("flash") %}
-                <ul class="flash-messages">
-                    <li class="{{ request.session.flash.category }}">{{ request.session.flash.message }}</li>
-                </ul>
-                {% set _ = request.session.pop("flash") %}
-    {% endif %}
 
     <!-- Centrování buttonu opravněně -->
     <div style="text-align: center; margin-bottom: 20px;">
