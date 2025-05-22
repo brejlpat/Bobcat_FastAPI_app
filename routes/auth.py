@@ -27,18 +27,18 @@ templates = Jinja2Templates(directory="templates")
 
 """
 Struktura databází / Database structure
-- users_ad
+- users_ad      -> tabulka s uživately/table of users
     - id (auto)
     - username
     - email
     - role
     - registry_date (auto)
-- login
+- login         -> tabulka se záznamy přihlášení/table of login records
     - id (auto)
     - username
     - token_expiration
     - login_date (auto)
-- device_edit
+- device_edit   -> tabulka se záznamy úprav zařízení/table of device edit records
     - id (auto)
     - username
     - project_id

@@ -118,7 +118,7 @@ async def create_OPC_UA_CLIENT_device(
     password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
-    image_dir = "static/images/DEVICES"
+    image_dir = "static/images/DEVICES_MAP"
     os.makedirs(image_dir, exist_ok=True)
     image_path = os.path.join(image_dir, f"{channel_name}.png")
 
@@ -177,7 +177,7 @@ async def create_OPC_UA_CLIENT_device(
 
     state.line = line
 
-    return templates.TemplateResponse("device.html", {
+    return templates.TemplateResponse("device_mapping.html", {
         "request": request,
         "status_message": status_message,
         "device_name": device_name,

@@ -282,13 +282,17 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                                headers={"Content-Type": "application/json"}
                                )
-
-    image_path = f"static/images/DEVICES/{channel}.png"
+    delete_json = response.json()
+    image_path = f"static/images/DEVICES_MAP/{channel}.png"
     if os.path.exists(image_path):
         os.remove(image_path)
 
     if response.status_code == 200:
         status_message = "Device deleted successfully."
+        cur.execute(
+            "INSERT INTO device_edit (username, project_id, payload, action) VALUES (%s, %s, %s, %s)",
+            (user.username, channel, delete_json, "DELETE")
+        )
     else:
         status_message = "Failed to delete device."
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
@@ -515,11 +519,6 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
 
     log_payload = payload.copy()
     log_payload.pop("PROJECT_ID", None)
-    cur.execute(
-        "INSERT INTO device_edit (username, project_id, payload) VALUES (%s, %s, %s)",
-        (user.username, project_id, json.dumps(log_payload))
-    )
-    conn.commit()
 
     # Endpoint pro úpravu channelu
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}/devices/{device}"
@@ -535,6 +534,11 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     # Výstup
     if response.status_code == 200:
         status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
+        cur.execute(
+            "INSERT INTO device_edit (username, project_id, payload, action) VALUES (%s, %s, %s, %s)",
+            (user.username, project_id, json.dumps(log_payload), "DEVICE edit")
+        )
+        conn.commit()
     else:
         status_message = f"❌ Error while editing the device: {response.status_code}"
 

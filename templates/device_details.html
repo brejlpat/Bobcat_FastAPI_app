@@ -24,9 +24,9 @@
         </div>
         <p style="padding: 10px"> </p>
         {% if line == "Laser" %}
-            <img src="/static/images/DEVICES/{{ device_info.device }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
+            <img src="/static/images/DEVICES_MAP/{{ device_info.device }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
         {% else %}
-            <img src="/static/images/DEVICES/{{ device_info.channel }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
+            <img src="/static/images/DEVICES_MAP/{{ device_info.channel }}.png" alt="Channel: {{ device_info.channel }}" style="width: auto; height: 40rem;">
         {% endif %}
 
         {% if tags %}
