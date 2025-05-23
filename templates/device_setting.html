@@ -19,8 +19,7 @@
         {% if driver == "OPC UA Client" %}
 
         {% elif driver == "OPC DA Client" %}
-            <label for="prog_id">* Program ID:</label>
-            <input type="text" id="prog_id" name="prog_id" required>
+
         {% elif driver == "Allen-Bradley ControlLogix Ethernet" %}
             <label for="ip_address_AB">* IP address:</label>
             <input type="text" id="ip_address_AB" name="ip_address_AB" placeholder="Format: <127.0.0.1>,1,0" required>
@@ -45,9 +44,6 @@
 
         <label for="image">Upload image (.png):</label>
         <input type="file" id="image" name="image" accept="image/png" required>
-
-        <label for="ip_address">IP address (if applicable):</label>
-        <input type="text" id="ip_address" name="ip_address" placeholder="např. 10.52.32.123">
 
         <!-- hidden input pro 'line' -->
         <input type="hidden" name="line" value="{{ line }}">

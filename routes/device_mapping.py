@@ -278,11 +278,29 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
 
     state.title = f"Device Mapping - {state.line} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+
+    get_response = requests.get(url_id, auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+                                headers={"Content-Type": "application/json"}
+                                )
+    if get_response.status_code == 200:
+        try:
+            channel_data = get_response.json()
+            driver = channel_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "nothing1")
+        except ValueError:
+            driver = "nothing2"
+    else:
+        driver = "nothing3"
+
     response = requests.delete(url_id,
                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                                headers={"Content-Type": "application/json"}
                                )
-    delete_json = response.json()
+
+    try:
+        delete_json = response.json()
+    except ValueError:
+        delete_json = {"info": f"Channel {channel} deleted"}
+
     image_path = f"static/images/DEVICES_MAP/{channel}.png"
     if os.path.exists(image_path):
         os.remove(image_path)
@@ -290,9 +308,10 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     if response.status_code == 200:
         status_message = "Device deleted successfully."
         cur.execute(
-            "INSERT INTO device_edit (username, project_id, payload, action) VALUES (%s, %s, %s, %s)",
-            (user.username, channel, delete_json, "DELETE")
+            "INSERT INTO device_edit (username, channel_name, payload, action, driver) VALUES (%s, %s, %s, %s, %s)",
+            (user.username, channel, json.dumps(delete_json), "DELETE", driver)
         )
+        conn.commit()
     else:
         status_message = "Failed to delete device."
     return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
@@ -528,6 +547,19 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
+    get_response = requests.get(url_id,
+                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+                                headers={"Content-Type": "application/json"}
+                                )
+    if get_response.status_code == 200:
+        try:
+            channel_data = get_response.json()
+            driver = channel_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "nothing1")
+        except ValueError:
+            driver = "nothing2"
+    else:
+        driver = "nothing3"
+
     # Odeslání požadavku na úpravu (PATCH = částečná změna)
     response = requests.put(url, headers=headers, data=json.dumps(payload), auth=(username, password))
 
@@ -535,8 +567,8 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     if response.status_code == 200:
         status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
         cur.execute(
-            "INSERT INTO device_edit (username, project_id, payload, action) VALUES (%s, %s, %s, %s)",
-            (user.username, project_id, json.dumps(log_payload), "DEVICE edit")
+            "INSERT INTO device_edit (username, channel_name, payload, action, driver) VALUES (%s, %s, %s, %s, %s)",
+            (user.username, channel, json.dumps(log_payload), "EDIT", driver)
         )
         conn.commit()
     else:

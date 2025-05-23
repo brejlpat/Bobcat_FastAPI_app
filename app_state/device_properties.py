@@ -1,4 +1,4 @@
-OPC_DA_device = {
+OPC_DA_Client_device = {
 	"PROJECT_ID": 3149364503,
 	"common.ALLTYPES_NAME": "Device1",
 	"common.ALLTYPES_DESCRIPTION": "",
