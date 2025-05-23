@@ -4,7 +4,7 @@ import numpy as np
 import json
 
 # Load the model
-model = SentenceTransformer('all-MiniLM-L6-v2')
+model = SentenceTransformer('all-mpnet-base-v2')
 
 # Read lines from a file
 with open(r"C:\Users\patrikbrejla\Documents\vector\channel_names.txt") as f:

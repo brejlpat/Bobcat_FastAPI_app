@@ -227,7 +227,6 @@ async def device_details(request: Request, user: User = Depends(get_current_user
                                 )
         device_data = response.json()
         if device_data:
-
             device_id = device_data[0].get("servermain.DEVICE_ID_STRING", "❌")  # IP address
             device = device_data[0].get("common.ALLTYPES_NAME", "❌")  # Device name
 
