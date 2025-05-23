@@ -189,3 +189,61 @@ async def add_user(request: Request, email: str = Form(...), user: User = Depend
         msg = f"Error adding user: {e}"
 
     return RedirectResponse(url=f"/admin/users", status_code=302)
+
+
+@router.get("/device_log", response_class=HTMLResponse)
+async def device_log(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí logy na všech zařízení.
+    -> vytvoření, úpravu, smazání zařízení
+
+    English:
+    Displays logs on all devices.
+    -> creation, modification, deletion of devices
+    """
+
+    if user.role != "admin":
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": "You are not an admin, you cannot access this page."
+        })
+
+    cur.execute("SELECT * FROM device_edit ORDER BY id DESC LIMIT 10")
+    logs = cur.fetchall()
+    df_logs = pd.DataFrame(logs, columns=["ID", "Username", "Channel", "Payload", "Date", "Action", "Driver"]).to_dict(orient="records")
+
+    return templates.TemplateResponse("device_log.html", {
+        "request": request,
+        "df_logs": df_logs,
+        "status_message": request.query_params.get("status_message"),
+        "username": user.username,
+        "role": user.role
+    })
+
+
+@router.get("/users_log", response_class=HTMLResponse)
+async def users_log(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí přihlášení všech uživatelů
+
+    English:
+    Displays the login of all users
+    """
+
+    if user.role != "admin":
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": "You are not an admin, you cannot access this page."
+        })
+
+    cur.execute("SELECT * FROM login ORDER BY id DESC LIMIT 10")
+    logs = cur.fetchall()
+    users_log = pd.DataFrame(logs, columns=["ID", "Username", "Token_expiration", "Date"]).to_dict(orient="records")
+
+    return templates.TemplateResponse("users_log.html", {
+        "request": request,
+        "user_logs": users_log,
+        "status_message": request.query_params.get("status_message"),
+        "username": user.username,
+        "role": user.role
+    })

@@ -547,7 +547,7 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
-    get_response = requests.get(url_id,
+    get_response = requests.get(url,
                                 auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                                 headers={"Content-Type": "application/json"}
                                 )
@@ -682,8 +682,25 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
             if form_str != orig_str:
                 payload[key] = form_value
 
+    log_payload = payload.copy()
+    log_payload.pop("PROJECT_ID", None)
+
     # Odeslání PATCH požadavku
     url = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
+
+    get_response = requests.get(url,
+                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+                                headers={"Content-Type": "application/json"}
+                                )
+    if get_response.status_code == 200:
+        try:
+            channel_data = get_response.json()
+            driver = channel_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "nothing1")
+        except ValueError:
+            driver = "nothing2"
+    else:
+        driver = "nothing3"
+
     response = requests.put(
         url,
         headers={"Content-Type": "application/json"},
@@ -692,9 +709,14 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
     )
 
     if response.status_code == 200:
-        status_message = "✅ Channel edited successfully!\nTo see the changes you need to disconnect and connect again."
+        status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
+        cur.execute(
+            "INSERT INTO device_edit (username, channel_name, payload, action, driver) VALUES (%s, %s, %s, %s, %s)",
+            (user.username, channel, json.dumps(log_payload), "EDIT", driver)
+        )
+        conn.commit()
     else:
-        status_message = f"❌ Error occured: {response.status_code}\n{response.text}"
+        status_message = f"❌ Error while editing the device: {response.status_code}"
 
     device_info = {
         "channel": new_name,

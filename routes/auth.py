@@ -140,7 +140,7 @@ def create_access_token(data: dict):
     """
 
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=120) + timedelta(minutes=30)
+    expire = datetime.utcnow() + timedelta(minutes=120) + timedelta(minutes=500)
     exp_timestamp = int(expire.timestamp())
 
     #print(f"Token expire datetime: {expire}")

@@ -76,6 +76,12 @@ input, select {
     border-radius: 5px;
 }
 
+select {
+    max-width: 70%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 input:focus, select:focus, textarea:focus {
     outline: none;
     border: 1px solid #FF4A00;
@@ -157,6 +163,9 @@ table {
         0 0 10px rgba(255, 74, 0, 0.2),
         0 4px 12px rgba(0, 0, 0, 0.4);
     color: #f0f0f0;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 th {
@@ -218,6 +227,7 @@ tr:hover td {
     color: #FF4A00;
     text-decoration: none;
     font-weight: bold;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
 }
 
 .footer a:hover {
