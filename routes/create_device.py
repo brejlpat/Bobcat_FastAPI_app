@@ -8,6 +8,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from app_state import state
+from app_state import channel_properties
+from app_state import device_properties
 
 # Načtení .env souboru
 # Load the .env file
@@ -33,7 +35,9 @@ async def channel(
 
     status_message = f"You´ve selected driver: {driver}"
     return templates.TemplateResponse("channel_setting.html",
-                                      {"request": request, "driver": driver, "status_message": status_message,
+                                      {"request": request,
+                                       "driver": driver,
+                                       "status_message": status_message,
                                        "username": user.username,
                                        "role": user.role
                                        })
@@ -44,7 +48,13 @@ async def create_channel(
         request: Request,
         channel_name: str = Form(...),
         driver: str = Form(...),
-        endpoint_url: str = Form(...),
+        endpoint_url: str = Form(""),
+        opc_pass: str = Form(""),
+        opc_username: str = Form(""),
+        channel_prog_id: str = Form(""),
+        source_name: str = Form(""),
+        source_username: str = Form(""),
+        source_pass: str = Form(""),
         description: str = Form(""),
         user: User = Depends(get_current_user)
 ):
@@ -55,6 +65,13 @@ async def create_channel(
     Creates an OPC UA Client channel.
     """
 
+    if not description:
+        description = f"{driver} {channel_name}"
+    if not opc_username:
+        opc_username = ""
+    if not opc_pass:
+        opc_pass = ""
+
     # URL pro API KEPServerEX
     url = "http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels"
 
@@ -62,26 +79,57 @@ async def create_channel(
     password = os.getenv("kepserver_password")
     headers = {"Content-Type": "application/json"}
 
-    payload = {
-        "common.ALLTYPES_NAME": channel_name,
-        "common.ALLTYPES_DESCRIPTION": description,
-        "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": driver,
-        "servermain.CHANNEL_DIAGNOSTICS_CAPTURE": False,
-        "servermain.CHANNEL_WRITE_OPTIMIZATIONS_METHOD": 2,
-        "servermain.CHANNEL_WRITE_OPTIMIZATIONS_DUTY_CYCLE": 10,
-        "servermain.CHANNEL_NON_NORMALIZED_FLOATING_POINT_HANDLING": 1,
-        "opcuaclient.CHANNEL_UA_SERVER_ENDPOINT_URL": endpoint_url,
-        "opcuaclient.CHANNEL_UA_SERVER_SECURITY_POLICY": 0,
-        "opcuaclient.CHANNEL_UA_SESSION_FAILED_CONNCTION_RETRY_INTERVAL_SECONDS": 5,
-        "opcuaclient.CHANNEL_UA_SESSION_WATCHDOG_TIMEOUT": 5
-    }
+    if driver == "OPC UA Client":
+        payload = channel_properties.OPC_UA_Client
+        payload["common.ALLTYPES_NAME"] = channel_name
+        payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
+        payload["opcuaclient.CHANNEL_UA_SERVER_ENDPOINT_URL"] = endpoint_url
+        payload["opcuaclient.CHANNEL_AUTHENTICATION_USERNAME"] = opc_username
+        payload["opcuaclient.CHANNEL_AUTHENTICATION_PASSWORD"] = opc_pass
+    elif driver == "ODBC Client":
+        payload = channel_properties.ODBC_Client
+        payload["common.ALLTYPES_NAME"] = channel_name
+        payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
+        payload["odbcclient.CHANNEL_DATA_SOURCE_NAME"] = source_name
+        payload["odbcclient.CHANNEL_DATA_SOURCE_USERNAME"] = source_username
+        payload["odbcclient.CHANNEL_DATA_SOURCE_PASSWORD"] = source_pass
+    elif driver == "Allen-Bradley ControlLogix Ethernet":
+        payload = channel_properties.Allen_Bradley_ControlLogix_Ethernet
+        payload["common.ALLTYPES_NAME"] = channel_name
+        payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
+    elif driver == "Torque Tool Ethernet":
+        payload = channel_properties.Torque_Tool_Ethernet.copy()
+        payload["common.ALLTYPES_NAME"] = channel_name
+        payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
+        payload.pop("PROJECT_ID", None)
+    elif driver == "OPC DA Client":
+        payload = channel_properties.OPC_DA_Client
+        payload["common.ALLTYPES_NAME"] = channel_name
+        payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
+        payload["servermain.CHANNEL_PROG_ID"] = channel_prog_id
 
     response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
+
+    print(response.text)
+    print("============================")
+    print(f"Channel payload: {payload}")
 
     if response.status_code == 201:
         status_message = f"Channel '{channel_name}' was successfully created!"
     else:
         status_message = f"Failed to create channel: {response.status_code}"
+        return templates.TemplateResponse("channel_setting.html",
+                                          {"request": request,
+                                           "driver": driver,
+                                           "status_message": status_message,
+                                           "username": user.username,
+                                           "role": user.role
+                                           })
 
     return templates.TemplateResponse("device_setting.html", {
         "request": request,
@@ -93,13 +141,17 @@ async def create_channel(
     })
 
 
-@router.post("/create_OPC_UA_CLIENT_device")
-async def create_OPC_UA_CLIENT_device(
+@router.post("/create_device")
+async def create_device(
         request: Request,
         device_name: str = Form(...),
         channel_name: str = Form(...),
         driver: str = Form(...),
         description: str = Form(...),
+        ip_address_AB: str = Form(""),
+        device_port: str = Form(""),
+        enet_port: str = Form(""),
+        ip_address_TT: str = Form(""),
         line: str = Form(...),
         image: UploadFile = File(...),
         user: User = Depends(get_current_user)
@@ -125,48 +177,31 @@ async def create_OPC_UA_CLIENT_device(
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
-    payload = {
-        "common.ALLTYPES_NAME": device_name,
-        "common.ALLTYPES_DESCRIPTION": description,
-        "servermain.MULTIPLE_TYPES_DEVICE_DRIVER": driver,
-        "servermain.DEVICE_MODEL": 0,
-        "servermain.DEVICE_CHANNEL_ASSIGNMENT": channel_name,
-        "servermain.DEVICE_DATA_COLLECTION": True,
-        "servermain.DEVICE_SIMULATED": False,
-        "servermain.DEVICE_STATIC_TAG_COUNT": 0,
-        "servermain.DEVICE_SCAN_MODE": 0,
-        "servermain.DEVICE_SCAN_MODE_RATE_MS": 1000,
-        "servermain.DEVICE_SCAN_MODE_PROVIDE_INITIAL_UPDATES_FROM_CACHE": False,
-        "opcuaclient.DEVICE_SUBSCRIPTION_PUBLISHING_INTERVAL_MILLISECONDS": 1000,
-        "opcuaclient.DEVICE_SUBSCRIPTION_MAX_NOTIFICATIONS_PER_PUBLISH": 0,
-        "opcuaclient.DEVICE_SUBSCRIPTION_UPDATE_MODE": 0,
-        "opcuaclient.DEVICE_SUBSCRIPTION_REGISTERED_READWRITE": True,
-        "opcuaclient.DEVICE_MAX_ITEMS_PER_READ": 512,
-        "opcuaclient.DEVICE_MAX_ITEMS_PER_WRITE": 512,
-        "opcuaclient.DEVICE_READ_TIMEOUT_MS": 1000,
-        "opcuaclient.DEVICE_WRITE_TIMEOUT_MS": 1000,
-        "opcuaclient.DEVICE_READ_AFTER_WRITE": True,
-        "opcuaclient.DEVICE_INITIAL_TIMEOUT_MS": 5000,
-        "opcuaclient.DEVICE_CONNECTION_LIFETIME_COUNT": 60,
-        "opcuaclient.DEVICE_CONNECTION_MAX_KEEP_ALIVE": 5,
-        "opcuaclient.DEVICE_CONNECTION_PRIORITY": 0,
-        "opcuaclient.DEVICE_MONITORED_ITEMS_SAMPLE_INTERVAL_MILLISECONDS": 500,
-        "opcuaclient.DEVICE_MONITORED_ITEMS_QUEUE_SIZE": 1,
-        "opcuaclient.DEVICE_MONITORED_ITEMS_DISCARD_OLDEST": True,
-        "opcuaclient.DEVICE_MONITORED_ITEMS_DEADBAND_TYPE": 0,
-        "opcuaclient.DEVICE_MONITORED_ITEMS_DEADBAND_VALUE": 0,
-        "redundancy.DEVICE_SECONDARY_PATH": "",
-        "redundancy.DEVICE_OPERATING_MODE": 0,
-        "redundancy.DEVICE_MONITOR_ITEM": "",
-        "redundancy.DEVICE_MONITOR_ITEM_POLL_INTERVAL": 300,
-        "redundancy.DEVICE_FAVOR_PRIMARY": True,
-        "redundancy.DEVICE_TRIGGER_ITEM": "",
-        "redundancy.DEVICE_TRIGGER_ITEM_SCAN_RATE": 1000,
-        "redundancy.DEVICE_TRIGGER_TYPE": 0,
-        "redundancy.DEVICE_TRIGGER_OPERATOR": 0,
-        "redundancy.DEVICE_TRIGGER_VALUE": "",
-        "redundancy.DEVICE_TRIGGER_TIMEOUT": 10000
-    }
+    if driver == "OPC UA Client":
+        payload = device_properties.OPC_UA_Client_device
+        payload["common.ALLTYPES_NAME"] = device_name
+    elif driver == "Allen-Bradley ControlLogix Ethernet":
+        payload = device_properties.Allen_Bradley_ControlLogix_Ethernet_device
+        payload["common.ALLTYPES_NAME"] = device_name
+        payload["servermain.DEVICE_ID_STRING"] = ip_address_AB
+        payload["servermain.DEVICE_PORT_NUMBER"] = device_port
+        payload["servermain.DEVICE_CL_ENET_PORT_NUMBER"] = enet_port
+    elif driver == "Torque Tool Ethernet":
+        payload = device_properties.Torque_Tool_Ethernet_device.copy()
+        payload["common.ALLTYPES_NAME"] = device_name
+        payload["servermain.DEVICE_ID_STRING"] = ip_address_TT
+        payload["torque_tool_ethernet.DEVICE_PORT_NUMBER"] = device_port
+        payload.pop("PROJECT_ID", None)
+    elif driver == "OPC DA Client":
+        payload = device_properties.OPC_DA_Client_device
+        payload["common.ALLTYPES_NAME"] = device_name
+    elif driver == "ODBC Client":
+        payload = device_properties.ODBC_Client_device
+        payload["common.ALLTYPES_NAME"] = device_name
+    response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
+    print(response.text)
+    print("============================")
+    print(f"Device paylaod: {payload}")
 
     response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
 

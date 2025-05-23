@@ -3,21 +3,51 @@
 {% block content %}
 <div class="container">
     <h1>Create new device</h1>
-    <form method="post" action="/create_device/create_OPC_UA_CLIENT_device" class="form-grid" enctype="multipart/form-data">
+    <form method="post" action="/create_device/create_device" class="form-grid" enctype="multipart/form-data">
+        <label for="driver">Driver:</label>
+        <input type="text" id="driver" name="driver" value="{{ driver }}" readonly>
+
         <label for="channel_name">Channel name:</label>
         <input type="text" id="channel_name" name="channel_name" readonly value="{{ channel_name }}">
 
         <label for="device_name">* Device name:</label>
         <input type="text" id="device_name" name="device_name" required>
 
-        <label for="driver">Driver:</label>
-        <input type="text" id="driver" name="driver" value="{{ driver }}" readonly>
-
         <label for="description">Description:</label>
         <input type="text" id="description" name="description">
 
+        {% if driver == "OPC UA Client" %}
+
+        {% elif driver == "OPC DA Client" %}
+            <label for="prog_id">* Program ID:</label>
+            <input type="text" id="prog_id" name="prog_id" required>
+        {% elif driver == "Allen-Bradley ControlLogix Ethernet" %}
+            <label for="ip_address_AB">* IP address:</label>
+            <input type="text" id="ip_address_AB" name="ip_address_AB" placeholder="Format: <127.0.0.1>,1,0" required>
+
+            <label for="device_port">* Device port number:</label>
+            <input type="text" id="device_port" name="device_port" placeholder="device port number" required>
+
+            <label for="enet_port">* Enet port number:</label>
+            <input type="text" id="enet_port" name="enet_port" placeholder="enet port number" required>
+
+        {% elif driver == "Torque Tool Ethernet" %}
+            <label for="ip_address_TT">* IP address:</label>
+            <input type="text" id="ip_address_TT" name="ip_address_TT" placeholder="Format 127.0.0.1" required>
+
+            <label for="device_port">* Device port number:</label>
+            <input type="text" id="device_port" name="device_port" placeholder="device port number" required>
+
+        {% elif driver == "ODBC Client" %}
+            <label for="source_name">Data source name:</label>
+            <input type="text" id="source_name" name="source_name" placeholder="e.g. LaserCutting_DB">
+        {% endif %}
+
         <label for="image">Upload image (.png):</label>
         <input type="file" id="image" name="image" accept="image/png" required>
+
+        <label for="ip_address">IP address (if applicable):</label>
+        <input type="text" id="ip_address" name="ip_address" placeholder="např. 10.52.32.123">
 
         <!-- hidden input pro 'line' -->
         <input type="hidden" name="line" value="{{ line }}">

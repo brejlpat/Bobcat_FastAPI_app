@@ -10,9 +10,33 @@
         <label for="driver">Driver:</label>
         <input type="text" id="driver" name="driver" value="{{ driver }}" readonly>
 
-        <label for="endpoint_url">* Endpoint URL:</label>
-        <input type="text" id="endpoint_url" name="endpoint_url" value="opc.tcp://10.52.32.214:4840" required>
+        {% if driver == "OPC UA Client" %}
+            <label for="endpoint_url">* Endpoint URL:</label>
+            <input type="text" id="endpoint_url" name="endpoint_url" placeholder="e.g. opc.tcp://10.52.32.214:4840" required>
 
+            <label for="opc_username">Authentication username</label>
+            <input type="text" id="opc_username" name="opc_username" placeholder="username">
+
+            <label for="opc_pass">Authentication password</label>
+            <input type="text" id="opc_pass" name="opc_pass" placeholder="password">
+
+        {% elif driver == "OPC DA Client" %}
+            <label for="channel_prog_id">* Channel program ID:</label>
+            <input type="text" id="channel_prog_id" name="channel_prog_id" placeholder="e.g. ABB.IRC5.OPC.Server.DA" required>
+        {% elif driver == "Allen-Bradley ControlLogix Ethernet" %}
+
+        {% elif driver == "Torque Tool Ethernet" %}
+
+        {% elif driver == "ODBC Client" %}
+            <label for="source_name">Data source name:</label>
+            <input type="text" id="source_name" name="source_name" placeholder="e.g. LaserCutting_DB">
+
+            <label for="source_username">Data source username:</label>
+            <input type="text" id="source_username" name="source_username" placeholder="username">
+
+            <label for="source_pass">Data source password:</label>
+            <input type="text" id="source_pass" name="source_pass" placeholder="password">
+        {% endif %}
         <label for="description">Description:</label>
         <input type="text" id="description" name="description">
 
