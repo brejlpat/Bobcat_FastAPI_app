@@ -1163,3 +1163,41 @@ tr:hover td {
     color: #78de20;
     background: none;
 }
+
+.search {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px; /* mezera mezi inputem a tlačítkem */
+  max-width: 400px;
+  width: 100%;
+}
+
+.search-form input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.search-form button {
+  padding: 8px 16px;
+  border: none;
+  background-color: #131e29; /* tvoje barva? */
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.search-form button:hover {
+  background-color: #0f1721;
+  transform: scale(1.03);
+  border: 1px solid #ea0000;
+}

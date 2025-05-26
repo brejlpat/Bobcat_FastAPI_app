@@ -4,12 +4,19 @@ from fastapi.templating import Jinja2Templates
 from routes.auth import get_current_user, User
 import psycopg2
 from psycopg2.extras import DictCursor
+from opcua import Client, ua
+from opcua.ua.uaerrors import UaError
+import requests
 import pandas as pd
 from email.message import EmailMessage
 import smtplib
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
+import numpy as np
+import json
+from app_state import state
 
 # Načtení .env souboru
 # Load the .env file
@@ -247,3 +254,94 @@ async def users_log(request: Request, user: User = Depends(get_current_user)):
         "username": user.username,
         "role": user.role
     })
+
+
+@router.get("/ai_model", response_class=HTMLResponse)
+async def ai_model(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí seznam AI modelů a jejich stav.
+
+    English:
+    Displays a list of AI models and their status.
+    """
+
+    if user.role != "admin":
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": "You are not an admin, you cannot access this page."
+        })
+
+    # Model for embedding
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+
+    cur.execute("DROP TABLE embeddings IF EXISTS")
+    conn.commit()
+
+    cur.execute("""CREATE TABLE IF NOT EXISTS embeddings (
+                id SERIAL PRIMARY KEY,
+                channel TEXT,
+                device TEXT,
+                embedding VECTOR(384)
+                );""")
+    conn.commit()
+
+    try:
+        # OPC UA připojení
+        opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
+        opc_client.set_security_string(
+            "Basic256Sha256,SignAndEncrypt,"
+            "certs_dbr/client_cert.der,"
+            "certs_dbr/client_key.pem,"
+            "certs_dbr/server_cert.der"
+        )
+
+        opc_client.application_uri = "urn:FreeOpcUa:python:client"
+        opc_client.set_user(os.getenv("kepserver_user"))
+        opc_client.set_password(os.getenv("kepserver_password"))
+        opc_client.connect()
+
+        objects = opc_client.get_objects_node()
+        channels = objects.get_children()
+
+        # Výstupní list channelů
+        channel_names = []
+        device_names = []
+
+        for ch in channels:
+            ch_name = ch.get_browse_name().Name
+            if ch_name[0] != "_" and ch_name != "Server":
+                for dev in ch.get_children():
+                    dev_name = dev.get_browse_name().Name
+                    if dev_name[0] != "_":
+                        channel_names.append(ch_name)
+                        device_names.append(dev_name)
+
+        opc_client.disconnect()
+    except Exception as e:
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": f"Error connecting to OPC UA: {e}",
+            "username": user.username,
+            "role": user.role
+        })
+    if channel_names:
+        channel_count = len(channel_names)
+        status_message = f"✅ Successfully connected to OPC UA. Found {channel_count} channels."
+        embeddings = model.encode(channel_names)
+        for channel, device, embedding in zip(channel_names, device_names, embeddings):
+            vector_str = json.dumps(embedding.tolist())
+            cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)", (channel, device, vector_str))
+        conn.commit()
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": status_message,
+            "username": user.username,
+            "role": user.role
+        })
+    else:
+        return templates.TemplateResponse("home.html", {
+            "request": request,
+            "status_message": "No channels found in OPC UA.",
+            "username": user.username,
+            "role": user.role
+        })

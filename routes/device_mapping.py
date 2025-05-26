@@ -16,6 +16,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import DictCursor
+from sentence_transformers import SentenceTransformer
 
 # Načtení .env souboru
 # Load the .env file
@@ -731,4 +732,60 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
+    })
+
+
+@router.post("/search")
+async def search(request: Request, user: User = Depends(get_current_user)):
+    """
+    Prohledá zařízení podle názvu a vrátí výsledky.
+
+    English:
+    Searches for devices by name and returns results.
+    """
+
+    form_data = await request.form()
+    search_query = form_data.get("search_query", "").strip()
+
+    model = SentenceTransformer("all-MiniLM-L6-v2")  # nebo jiný model
+    query_vec = model.encode(search_query).tolist()
+
+    if not search_query:
+        return RedirectResponse(url="/device_mapping/lines", status_code=303)
+
+    state.title = f"Results for '{search_query}'"
+    try:
+        cur.execute("""
+            SELECT channel, device, embedding <=> %s::vector AS distance
+            FROM embeddings
+            ORDER BY distance
+            LIMIT 10;
+        """, (query_vec,))
+        results = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+
+    opc_devices = []
+    for channel, device, embedding in results:
+        opc_devices.append({
+            "channel": channel,
+            "device": device
+        })
+    state.opc_devices = opc_devices
+    state.is_connected = True
+    state.line = "Search Results"
+    print(opc_devices)
+
+    # Zde byste měli implementovat logiku pro hledání zařízení v databázi nebo jiném zdroji dat
+    # Here you should implement the logic to search for devices in the database or other data source
+
+    return templates.TemplateResponse("device.html", {
+        "request": request,
+        "opc_devices": state.opc_devices,
+        "is_connected": state.is_connected,
+        "title": state.title,
+        "username": user.username,
+        "role": user.role,
+        "line": state.line
     })

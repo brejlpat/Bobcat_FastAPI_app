@@ -337,7 +337,7 @@ async def register_post(request: Request, email: str = Form(...)):
         
         Please review and approve the request in the account management section.
         
-        Best regards,  
+        Best regards,
         Bobcat Automation Team"""
         )
 

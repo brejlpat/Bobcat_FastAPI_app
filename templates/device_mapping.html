@@ -17,9 +17,11 @@
         <a href="/device_mapping/device?line=TruBend"><img src="../static/images/TruBend-icon.png" alt=""><p>TruBend</p></a>
         <a href="/device_mapping/device?line=Laser"><img src="../static/images/Laser-icon.png" alt=""><p>Laser</p></a>
     </div>
-    <div style="margin-top: 30px; text-align: center;">
-      <input id="line-search-input" type="text" placeholder="Enter a keyword..." style="padding: 8px; width: 250px;">
-      <button onclick="searchLine()" style="padding: 8px;">Search</button>
+    <div class="search">
+      <form method="post" action="/device_mapping/search" class="search-form">
+        <input type="text" name="search_query" placeholder="Enter a keyword..." style="padding: 8px; width: 250px;">
+        <button type="submit" style="padding: 8px;">Search</button>
+      </form>
     </div>
     <section>
         <a href="/device_mapping/channel_setting"><button>Create device</button></a>
