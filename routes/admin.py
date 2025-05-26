@@ -21,7 +21,7 @@ templates = Jinja2Templates(directory="templates")
 
 # DB připojení
 conn = psycopg2.connect(
-    host="localhost",
+    host=os.getenv("db_host"),
     dbname="postgres",
     user=os.getenv("db_user"),
     password=os.getenv("db_password"),

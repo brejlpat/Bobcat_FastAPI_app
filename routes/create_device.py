@@ -21,7 +21,7 @@ load_dotenv(dotenv_path=env_path)
 # DB připojení
 # DB connection
 conn = psycopg2.connect(
-    host="localhost",
+    host=os.getenv("db_host"),
     dbname="postgres",
     user=os.getenv("db_user"),
     password=os.getenv("db_password"),
@@ -132,10 +132,6 @@ async def create_channel(
 
     response = requests.post(url, headers=headers, data=json.dumps(payload), auth=(username, password))
 
-    print(response.text)
-    print("============================")
-    print(f"Channel payload: {payload}")
-
     if response.status_code == 201:
         status_message = f"Channel '{channel_name}' was successfully created!"
     else:
@@ -229,10 +225,6 @@ async def create_device(
 
     sql_payload = {"device": device_name,
                    "channel": channel_name}
-
-    print(response.text)
-    print("============================")
-    print(f"Channel payload: {payload}")
 
     if response.status_code == 201:
         status_message = f"✅ Device '{device_name}' was successfully created in channel '{channel_name}'!"

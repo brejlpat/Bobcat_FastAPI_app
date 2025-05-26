@@ -3,13 +3,13 @@ CREATE TABLE IF NOT EXISTS users_ad (
     username TEXT,
     email TEXT NOT NULL UNIQUE,
     role TEXT DEFAULT 'user',
-    registry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ON CONFLICT DO NOTHING
+    registry_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO users_ad (email, role)
-VALUES ('patrik.brejla@doosan.com', 'admin')
-ON CONFLICT DO NOTHING;
+-- Dummy záznam admina, aby bylo možné se přihlásit
+INSERT INTO users_ad (username, email, role)
+VALUES ('patrikbrejla', 'patrik.brejla@doosan.com', 'admin')
+ON CONFLICT (email) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS login (
     id SERIAL PRIMARY KEY,
@@ -26,4 +26,4 @@ CREATE TABLE IF NOT EXISTS device_edit (
     device_edit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     action TEXT,
     driver TEXT
-)
+);

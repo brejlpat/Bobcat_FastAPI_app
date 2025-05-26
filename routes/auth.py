@@ -6,7 +6,8 @@ from jose import JWTError, jwt
 from jose.exceptions import ExpiredSignatureError
 from datetime import datetime, timedelta
 from fastapi.templating import Jinja2Templates
-from ldap3 import Server, Connection, ALL, NTLM
+from ldap3 import Server, Connection, ALL, NTLM, Tls
+import ssl
 from email.message import EmailMessage
 import smtplib
 import psycopg2
@@ -49,7 +50,7 @@ Struktura databází / Database structure
 # DB připojení
 # DB connection
 conn = psycopg2.connect(
-    host="localhost",
+    host=os.getenv("db_host"),
     dbname="postgres",
     user=os.getenv("db_user"),
     password=os.getenv("db_password"),
@@ -90,24 +91,44 @@ class TokenData(BaseModel):
 def authenticate_ldap_user(username: str, password: str):
     """
     Autentizuje uživatele pomocí LDAP serveru.
-    Pokud je uživatel úspěšně autentizován, vrátí jeho email a username v dictionary.
+    Pokud je autentizace úspěšná, vrací dict s email a username.
+    Pokud selže, vrací None.
 
     English:
-    Authenticates a user using the LDAP server.
-    If the user is successfully authenticated, returns their email and username in a dictionary.
+    Authenticates the user using the LDAP server.
+    If authentication is successful, returns a dict with email and username.
+    If it fails, returns None.
     """
     try:
-        server = Server(LDAP_SERVER, get_info=None, connect_timeout=3)
-        conn_ldap = Connection(server, user=f"DSG\\{username}", password=password, authentication=NTLM, receive_timeout=3)
+        tls_config = Tls(validate=ssl.CERT_NONE)
+
+        server = Server(
+            LDAP_SERVER,
+            use_ssl=True,
+            tls=tls_config,
+            get_info=None,
+            connect_timeout=3
+        )
+
+        conn_ldap = Connection(
+            server,
+            user=f"DSG\\{username}",
+            password=password,
+            authentication=NTLM,
+            receive_timeout=3
+        )
+
         if not conn_ldap.bind():
             return None
 
         conn_ldap.search(BASE_DN, f"(sAMAccountName={username})", attributes=["cn", "mail"])
+
         if not conn_ldap.entries:
             return None
 
         user = conn_ldap.entries[0]
         return {"email": user.mail.value, "username": user.cn.value}
+
     except Exception:
         return None
 
