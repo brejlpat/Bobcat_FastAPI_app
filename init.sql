@@ -27,3 +27,11 @@ CREATE TABLE IF NOT EXISTS device_edit (
     action TEXT,
     driver TEXT
 );
+
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS embeddings (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    embedding VECTOR(384)
+);

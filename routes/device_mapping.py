@@ -238,7 +238,7 @@ async def device_details(request: Request, user: User = Depends(get_current_user
                             )
     device_data = response.json()
     if device_data:
-        device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")     # IP address
+        device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")  # IP address
 
     if "<" in device_id:
         device_id = device_id.split("<")[1]
@@ -278,7 +278,8 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     state.title = f"Device Mapping - {state.line} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
 
-    get_response = requests.get(url_id, auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+    get_response = requests.get(url_id,
+                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
                                 headers={"Content-Type": "application/json"}
                                 )
     if get_response.status_code == 200:
@@ -313,13 +314,13 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
         conn.commit()
     else:
         status_message = "Failed to delete device."
-    return templates.TemplateResponse("device.html", {"request": request, "status_message": status_message,
-                                                      "is_connected": state.is_connected,
-                                                      "title": state.title,
-                                                      "line": state.line,
-                                                      "username": user.username,
-                                                      "role": user.role
-                                                      })
+    return templates.TemplateResponse("device_mapping.html", {"request": request, "status_message": status_message,
+                                                              "is_connected": state.is_connected,
+                                                              "title": state.title,
+                                                              "line": state.line,
+                                                              "username": user.username,
+                                                              "role": user.role
+                                                              })
 
 
 @router.get("/show_tags", response_class=HTMLResponse)
@@ -525,7 +526,7 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
 
     new_name = str(form["common.ALLTYPES_NAME"])
     old_name = str(device_payload["common.ALLTYPES_NAME"])
-    #print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
+    # print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
     for key, original_value in device_payload.items():
         # Získáš hodnotu z formuláře jen pokud tam opravdu existuje
@@ -671,7 +672,7 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         if os.path.exists(old_image_path):
             os.makedirs(new_dir, exist_ok=True)
             shutil.move(old_image_path, new_image_path)
-            #print(f"✅ Obrázek přejmenován na: {new_image_path}")
+            # print(f"✅ Obrázek přejmenován na: {new_image_path}")
 
     # Porovnej hodnoty z formuláře s payloadem a přidej změněné klíče
     for key, form_value in form.items():
