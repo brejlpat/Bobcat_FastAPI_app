@@ -206,6 +206,8 @@ async def device_details(request: Request, user: User = Depends(get_current_user
     device_data = response.json()
     if device_data:
         device_id = device_data.get("servermain.DEVICE_ID_STRING", "❌")  # IP address
+        driver = device_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "❌")  # Driver name
+        device_port = device_data.get("controllogix_ethernet.DEVICE_PORT_NUMBER", "❌")  # Device port
 
     if "<" in device_id:
         device_id = device_id.split("<")[1]
@@ -224,7 +226,9 @@ async def device_details(request: Request, user: User = Depends(get_current_user
                                                               "title": state.title,
                                                               "line": state.line,
                                                               "username": user.username,
-                                                              "role": user.role
+                                                              "role": user.role,
+                                                              "driver": driver,
+                                                              "device_port": device_port
                                                               })
 
 
@@ -738,6 +742,7 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         "request": request,
         "device_info": device_info,
         "status_message": status_message,
+        "driver": driver,
         "username": user.username,
         "role": user.role
     })

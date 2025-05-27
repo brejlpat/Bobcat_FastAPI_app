@@ -102,15 +102,6 @@ async def create_channel(
         payload["opcuaclient.CHANNEL_AUTHENTICATION_USERNAME"] = opc_username
         payload["opcuaclient.CHANNEL_AUTHENTICATION_PASSWORD"] = opc_pass
         payload.pop("PROJECT_ID", None)
-    elif driver == "ODBC Client":
-        payload = channel_properties.ODBC_Client.copy()
-        payload["common.ALLTYPES_NAME"] = channel_name
-        payload["common.ALLTYPES_DESCRIPTION"] = description
-        payload["servermain.MULTIPLE_TYPES_DEVICE_DRIVER"] = driver
-        payload["odbcclient.CHANNEL_DATA_SOURCE_NAME"] = source_name
-        payload["odbcclient.CHANNEL_DATA_SOURCE_USERNAME"] = source_username
-        payload["odbcclient.CHANNEL_DATA_SOURCE_PASSWORD"] = source_pass
-        payload.pop("PROJECT_ID", None)
     elif driver == "Allen-Bradley ControlLogix Ethernet":
         payload = channel_properties.Allen_Bradley_ControlLogix_Ethernet.copy()
         payload["common.ALLTYPES_NAME"] = channel_name
@@ -216,11 +207,6 @@ async def create_device(
         payload.pop("PROJECT_ID", None)
     elif driver == "OPC DA Client":
         payload = device_properties.OPC_DA_Client_device.copy()
-        payload["common.ALLTYPES_NAME"] = device_name
-        payload["common.ALLTYPES_DESCRIPTION"] = description
-        payload.pop("PROJECT_ID", None)
-    elif driver == "ODBC Client":
-        payload = device_properties.ODBC_Client_device.copy()
         payload["common.ALLTYPES_NAME"] = device_name
         payload["common.ALLTYPES_DESCRIPTION"] = description
         payload.pop("PROJECT_ID", None)

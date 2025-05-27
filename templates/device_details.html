@@ -9,11 +9,13 @@
     <h1>Device Details</h1>
     <div class="device-details">
         <h2>Channel: {{ device_info.channel }}</h2>
-        <h3>Device: {{ device_info.device }}</h3>
+        <h2>Device: {{ device_info.device }}</h2>
+        <h3>Driver: {{ driver }}</h3>
         <h3>
             IP address: <span id="device-ip">{{ device_info.device_id }}</span>
             <button type="button" onclick="copyToClipboard(event)" class="copy-btn" id="copy-btn" title="Copy to clipboard">📋</button>
         </h3>
+        <h3>Device port: {{ device_port }}</h3>
 
         <div class="icons-section">
             <a href="/device_mapping/show_tags?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Show tags</a>
