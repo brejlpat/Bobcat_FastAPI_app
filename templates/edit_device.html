@@ -9,8 +9,13 @@
     <div class="form-section">
         {% for key, value in payload.items() %}
             <div class="form-group">
-                <label for="{{ key }}">{{ key }}</label>
-                <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}">
+                {% if key == "servermain.MULTIPLE_TYPES_DEVICE_DRIVER" or key == "PROJECT_ID" or key == "servermain.DEVICE_UNIQUE_ID" %}
+                    <label for="{{ key }}">{{ key }}</label>
+                    <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}" readonly>
+                {% else %}
+                    <label for="{{ key }}">{{ key }}</label>
+                    <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}">
+                {% endif %}
             </div>
         {% endfor %}
 

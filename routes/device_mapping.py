@@ -462,6 +462,20 @@ async def cancel_tags(request: Request, user: User = Depends(get_current_user)):
     })
 
 
+def convert_form_value(value: str):
+    # Pokusíme se převést na int
+    if value.isdigit():
+        return int(value)
+    # Zkusíme boolean
+    lower_val = value.lower()
+    if lower_val == "true":
+        return True
+    if lower_val == "false":
+        return False
+    # Jinak necháme jako string
+    return value
+
+
 @router.get("/edit_device", response_class=HTMLResponse)
 async def edit_device_get(request: Request, user: User = Depends(get_current_user)):
     """
@@ -537,12 +551,23 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     # print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
     for key, original_value in device_payload.items():
-        # Získáš hodnotu z formuláře jen pokud tam opravdu existuje
         if key in form:
-            form_value = str(form[key])
-            original_value = str(original_value)
-            if form_value != original_value:
-                payload[key] = form_value
+            form_value_raw = str(form[key])
+            converted_value = convert_form_value(form_value_raw)
+
+            # Převedeme původní hodnotu na srovnatelný typ
+            if isinstance(original_value, bool):
+                original_value_converted = bool(original_value)
+            elif isinstance(original_value, int):
+                try:
+                    original_value_converted = int(original_value)
+                except ValueError:
+                    original_value_converted = original_value
+            else:
+                original_value_converted = str(original_value)
+
+            if converted_value != original_value_converted:
+                payload[key] = converted_value
 
     log_payload = payload.copy()
     log_payload.pop("PROJECT_ID", None)
@@ -687,12 +712,24 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
             # print(f"✅ Obrázek přejmenován na: {new_image_path}")
 
     # Porovnej hodnoty z formuláře s payloadem a přidej změněné klíče
-    for key, form_value in form.items():
-        if key in channel_payload:
-            form_str = str(form_value)
-            orig_str = str(channel_payload[key])
-            if form_str != orig_str:
-                payload[key] = form_value
+    for key, original_value in channel_payload.items():
+        if key in form:
+            form_value_raw = str(form[key])
+            converted_value = convert_form_value(form_value_raw)
+
+            # Převedeme původní hodnotu na srovnatelný typ
+            if isinstance(original_value, bool):
+                original_value_converted = bool(original_value)
+            elif isinstance(original_value, int):
+                try:
+                    original_value_converted = int(original_value)
+                except ValueError:
+                    original_value_converted = original_value
+            else:
+                original_value_converted = str(original_value)
+
+            if converted_value != original_value_converted:
+                payload[key] = converted_value
 
     log_payload = payload.copy()
     log_payload.pop("PROJECT_ID", None)
