@@ -2,8 +2,11 @@
 
 {% block content %}
 <div class="container">
-    <h1>Edit device: {{ device_info.device }}</h1>
-    <h2>Channel: {{ device_info.channel }}</h2>
+    <div style="text-align: left">
+        <a href="javascript:history.back()" class="btn-back"><img src="../static/images/back-btn.png" alt="Back"></a>
+    </div>
+    <h1>Edit channel: {{ device_info.channel }}</h1>
+    <h2>Device: {{ device_info.device }}</h2>
 
     <form method="post" action="/device_mapping/edit_channel?channel={{ device_info.channel }}&device={{ device_info.device }}&project_id={{ project_id }}&device_id={{ device_info.device_id }}">
     <div class="form-section">

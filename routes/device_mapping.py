@@ -309,7 +309,7 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
         os.remove(image_path)
 
     if response.status_code == 200:
-        status_message = "Device deleted successfully."
+        status_message = "✅ Device deleted successfully."
         cur.execute(
             "INSERT INTO device_edit (username, channel_name, payload, action, driver) VALUES (%s, %s, %s, %s, %s)",
             (user.username, channel, json.dumps(delete_json), "DELETE", driver)
@@ -464,8 +464,10 @@ async def cancel_tags(request: Request, user: User = Depends(get_current_user)):
 
 def convert_form_value(value: str):
     # Pokusíme se převést na int
-    if value.isdigit():
+    try:
         return int(value)
+    except ValueError:
+        pass
     # Zkusíme boolean
     lower_val = value.lower()
     if lower_val == "true":
@@ -547,8 +549,6 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     }
 
     new_name = str(form["common.ALLTYPES_NAME"])
-    old_name = str(device_payload["common.ALLTYPES_NAME"])
-    # print(f"NEW_name: {new_name} ---------- OLD_name: {old_name}")
 
     for key, original_value in device_payload.items():
         if key in form:
@@ -595,7 +595,6 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
 
     # Odeslání požadavku na úpravu (PATCH = částečná změna)
     response = requests.put(url, headers=headers, data=json.dumps(payload), auth=(username, password))
-
     # Výstup
     if response.status_code == 200:
         status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
@@ -702,14 +701,13 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
 
     # Přejmenování obrázku, pokud se změnil název
     if new_name != old_name:
-        old_image_path = f"static/images/DEVICES/{old_name}.png"
-        new_dir = f"static/images/DEVICES"
+        old_image_path = f"static/images/DEVICES_MAP/{old_name}.png"
+        new_dir = f"static/images/DEVICES_MAP"
         new_image_path = os.path.join(new_dir, f"{new_name}.png")
 
         if os.path.exists(old_image_path):
             os.makedirs(new_dir, exist_ok=True)
             shutil.move(old_image_path, new_image_path)
-            # print(f"✅ Obrázek přejmenován na: {new_image_path}")
 
     # Porovnej hodnoty z formuláře s payloadem a přidej změněné klíče
     for key, original_value in channel_payload.items():

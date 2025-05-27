@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import create_engine, text
 import pandas as pd
 import psycopg2
 from psycopg2.extras import DictCursor

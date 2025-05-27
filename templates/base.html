@@ -40,11 +40,6 @@
                 <a href="#"><i class="fas fa-industry"></i> CNC Machine</a>
                 <a href="/device_mapping/lines"><i class="fas fa-network-wired"></i> Device Mapping</a>
                 <a href="/main/plant_status"><i class="fas fa-map"></i> Plant Status</a>
-                {% if is_connected and device_info %}
-                    <a href="/device_mapping/device?line={{ line }}">→ {{ device_info.channel }} 🟢</a>
-                {% elif is_connected and line != "❌" %}
-                    <a href="/device_mapping/device?line={{ line }}">→ {{ line }} 🟢</a>
-                {% endif %}
             </div>
             <!-- Překryv -->
             <div id="side-overlay" class="side-overlay"></div>

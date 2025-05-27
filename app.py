@@ -3,9 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.exceptions import RequestValidationError
-from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
-from starlette.routing import Route
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from routes import routers
 from routes.device_mapping import get_is_connected
@@ -20,10 +18,6 @@ load_dotenv()
 # Vytvoření aplikace
 # Create the FastAPI application
 app = FastAPI()
-
-# Přidání middleware pro session
-# Add middleware for session management
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("APP_SECRET_KEY"))
 
 # Načtení stylů a templates
 # Load styles and templates
