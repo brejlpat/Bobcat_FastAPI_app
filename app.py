@@ -6,7 +6,6 @@ from fastapi.exceptions import RequestValidationError
 from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from routes import routers
-from routes.device_mapping import get_is_connected
 from dotenv import load_dotenv
 import os
 import pprint
@@ -23,7 +22,6 @@ app = FastAPI()
 # Load styles and templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-templates.env.globals["is_connected"] = get_is_connected()
 
 # Přidání routerů
 # Add routers
