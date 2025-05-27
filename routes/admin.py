@@ -274,15 +274,7 @@ async def ai_model(request: Request, user: User = Depends(get_current_user)):
     # Model for embedding
     model = SentenceTransformer('all-MiniLM-L6-v2')
 
-    cur.execute("DROP TABLE embeddings IF EXISTS")
-    conn.commit()
-
-    cur.execute("""CREATE TABLE IF NOT EXISTS embeddings (
-                id SERIAL PRIMARY KEY,
-                channel TEXT,
-                device TEXT,
-                embedding VECTOR(384)
-                );""")
+    cur.execute("DELETE FROM embeddings")
     conn.commit()
 
     try:
@@ -326,12 +318,17 @@ async def ai_model(request: Request, user: User = Depends(get_current_user)):
         })
     if channel_names:
         channel_count = len(channel_names)
-        status_message = f"✅ Successfully connected to OPC UA. Found {channel_count} channels."
+        print(f"From KepserverEX: {channel_count}")
         embeddings = model.encode(channel_names)
         for channel, device, embedding in zip(channel_names, device_names, embeddings):
             vector_str = json.dumps(embedding.tolist())
             cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)", (channel, device, vector_str))
+            cur.execute("SELECT COUNT(channel) FROM embeddings")
+            existing_count = cur.fetchone()[0]
+
+            status_message = f"✅ Successfully connected to OPC UA. Found {existing_count} channels."
         conn.commit()
+        print(f"From DB: {existing_count}")
         return templates.TemplateResponse("home.html", {
             "request": request,
             "status_message": status_message,

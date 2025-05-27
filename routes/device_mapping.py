@@ -774,7 +774,7 @@ async def search(request: Request, user: User = Depends(get_current_user)):
         })
     state.opc_devices = opc_devices
     state.is_connected = True
-    state.line = "Search Results"
+    state.line = f"Search Results for {search_query}"
     print(opc_devices)
 
     # Zde byste měli implementovat logiku pro hledání zařízení v databázi nebo jiném zdroji dat
