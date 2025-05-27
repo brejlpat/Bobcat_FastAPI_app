@@ -62,7 +62,6 @@ async def devices(request: Request, user: User = Depends(get_current_user)):
     state.title = "Device Mapping - Lines"
 
     return templates.TemplateResponse("device_mapping.html", {"request": request,
-                                                              "is_connected": state.is_connected,
                                                               "title": state.title,
                                                               "username": user.username,
                                                               "role": user.role
@@ -98,11 +97,9 @@ async def device(request: Request, user: User = Depends(get_current_user)):
         opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
 
-        state.is_connected = True
         status_message = "✅ Connected"
     except Exception as e:
         status_message = f"❌ Connection error: {e}"
-        state.is_connected = False
 
     opc_devices = []
     objects = opc_client.get_objects_node()
@@ -123,7 +120,6 @@ async def device(request: Request, user: User = Depends(get_current_user)):
 
     return templates.TemplateResponse("device.html", {
         "request": request,
-        "is_connected": state.is_connected,
         "status_message": status_message,
         "opc_devices": state.opc_devices,
         "title": state.title,
@@ -131,66 +127,6 @@ async def device(request: Request, user: User = Depends(get_current_user)):
         "username": user.username,
         "role": user.role
     })
-
-
-"""@router.post("/connect_opcua")
-async def connect_opcua(request: Request, user: User = Depends(get_current_user)):
-    Připojí se k OPC UA serveru a načte zařízení na vybrané lince.
-
-    English:
-    Connects to the OPC UA server and loads devices on the selected line.
-
-    global opc_client, status_message
-
-    state.line = request.query_params.get("line", "❌")
-    state.title = f"Device Mapping - {state.line}"
-    try:
-        opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
-        opc_client.set_security_string(
-            "Basic256Sha256,SignAndEncrypt,"
-            "certs_dbr/client_cert.der,"
-            "certs_dbr/client_key.pem,"
-            "certs_dbr/server_cert.der"
-        )
-
-        opc_client.application_uri = "urn:FreeOpcUa:python:client"
-        opc_client.set_user(os.getenv("kepserver_user"))
-        opc_client.set_password(os.getenv("kepserver_password"))
-        opc_client.connect()
-
-        state.is_connected = True
-        status_message = "✅ Connected"
-    except Exception as e:
-        status_message = f"❌ Connection error: {e}"
-        state.is_connected = False
-
-    opc_devices = []
-    objects = opc_client.get_objects_node()
-    channels = objects.get_children()
-
-    for ch in channels:
-        ch_name = ch.get_browse_name().Name
-        if ch_name[0] != "_" and ch_name != "Server" and state.line in ch_name:
-            for dev in ch.get_children():
-                dev_name = dev.get_browse_name().Name
-                if dev_name[0] != "_":
-                    opc_devices.append({
-                        "channel": ch_name,
-                        "device": dev_name
-                    })
-
-    state.opc_devices = opc_devices
-
-    return templates.TemplateResponse("device.html", {
-        "request": request,
-        "is_connected": state.is_connected,
-        "status_message": status_message,
-        "opc_devices": state.opc_devices,
-        "title": state.title,
-        "line": state.line,
-        "username": user.username,
-        "role": user.role
-    })"""
 
 
 @router.post("/disconnect_opcua")
@@ -207,7 +143,6 @@ async def disconnect_opcua(request: Request):
     if opc_client:
         opc_client.disconnect()
     opc_client = None
-    state.is_connected = False
     status_message = "❌ Disconnected"
     return RedirectResponse(url="/device_mapping/lines", status_code=303)
 
@@ -227,21 +162,11 @@ async def channel_setting(request: Request, user: User = Depends(get_current_use
     line = request.query_params.get("line", "❌")
     state.line = line
 
-    return templates.TemplateResponse("driver_setting.html", {"request": request, "is_connected": state.is_connected,
-                                                              "title": state.title, "line": state.line,
+    return templates.TemplateResponse("driver_setting.html", {"request": request,
+                                                              "title": state.title,
+                                                              "line": state.line,
                                                               "username": user.username,
                                                               "role": user.role})
-
-
-def get_is_connected():
-    """
-    Funkce pro získání stavu připojení.
-
-    English:
-    Function to get the connection status.
-    """
-
-    return state.is_connected
 
 
 @router.get("/device_details")
@@ -291,12 +216,11 @@ async def device_details(request: Request, user: User = Depends(get_current_user
         "device": device,
         "device_id": device_id
     }
-    state.is_connected = True
+
     status_message = "✅ Device details retrieved successfully."
     return templates.TemplateResponse("device_details.html", {"request": request,
                                                               "device_info": device_info,
                                                               "status_message": status_message,
-                                                              "is_connected": state.is_connected,
                                                               "title": state.title,
                                                               "line": state.line,
                                                               "username": user.username,
@@ -361,8 +285,8 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     # Function for AI model update
     ai_model_func()
 
-    return templates.TemplateResponse("device_mapping.html", {"request": request, "status_message": status_message,
-                                                              "is_connected": state.is_connected,
+    return templates.TemplateResponse("device_mapping.html", {"request": request,
+                                                              "status_message": status_message,
                                                               "title": state.title,
                                                               "line": state.line,
                                                               "username": user.username,
@@ -461,7 +385,6 @@ async def show_tags(request: Request, user: User = Depends(get_current_user)):
         "tags": tags_with_values,
         "device_info": device_info,
         "status_message": status_message,
-        "is_connected": state.is_connected,
         "line": state.line,
         "username": user.username,
         "role": user.role
@@ -495,7 +418,6 @@ async def cancel_tags(request: Request, user: User = Depends(get_current_user)):
         "tags": tags_with_values,
         "status_message": status_message,
         "device_info": device_info,
-        "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
     })
@@ -556,7 +478,6 @@ async def edit_device_get(request: Request, user: User = Depends(get_current_use
         "device_info": device_info,
         "payload": device_payload,
         "project_id": project_id,
-        "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
     })
@@ -659,7 +580,6 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
         "request": request,
         "device_info": device_info,
         "status_message": status_message,
-        "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
     })
@@ -705,7 +625,6 @@ async def edit_channel_get(request: Request, user: User = Depends(get_current_us
         "device_info": device_info,
         "payload": channel_payload,
         "project_id": project_id,
-        "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
     })
@@ -818,7 +737,6 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         "request": request,
         "device_info": device_info,
         "status_message": status_message,
-        "is_connected": state.is_connected,
         "username": user.username,
         "role": user.role
     })
@@ -857,13 +775,11 @@ async def search(request: Request, user: User = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Vector search failed: {e}")
 
     state.opc_devices = [{"channel": ch, "device": dev, "distance": dist} for ch, dev, dist in results]
-    state.is_connected = True
     state.line = f"Search Results for {search_query}"
 
     return templates.TemplateResponse("device.html", {
         "request": request,
         "opc_devices": state.opc_devices,
-        "is_connected": state.is_connected,
         "title": state.title,
         "username": user.username,
         "role": user.role,
@@ -889,7 +805,6 @@ async def channel_device_list(request: Request, user: User = Depends(get_current
     state.title = "Channel Device List"
     return templates.TemplateResponse("channel_list.html", {
         "request": request,
-        "is_connected": state.is_connected,
         "title": state.title,
         "username": user.username,
         "role": user.role,

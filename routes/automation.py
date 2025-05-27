@@ -30,7 +30,6 @@ async def dashboard(request: Request, user: User = Depends(get_current_user)):
     return templates.TemplateResponse("automation.html", {
         "request": request,
         "team_members": team_members,
-        "is_connected": state.is_connected,
         "line": state.line,
         "username": user.username,
         "role": user.role

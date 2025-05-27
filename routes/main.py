@@ -45,7 +45,6 @@ async def home(request: Request, user: User = Depends(get_current_user)):
     return templates.TemplateResponse("home.html", {
         "request": request,
         "title": state.title,
-        "is_connected": state.is_connected,
         "line": line,
         "username": user.username,
         "role": user.role
@@ -78,9 +77,8 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
         opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
 
-        state.is_connected = True
     except Exception as e:
-        state.is_connected = False
+        status_message = f"⚠️ Error connecting to OPC UA server: {e}"
 
     tags_with_values = []
     try:
@@ -123,7 +121,7 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
         "title": state.title,
         "tags": tags_with_values,
         "line": line,
-        "is_connected": state.is_connected,
+        "status_message": status_message,
         "username": user.username,
         "role": user.role
     })
