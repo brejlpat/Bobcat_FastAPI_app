@@ -36,6 +36,9 @@ conn = psycopg2.connect(
 )
 cur = conn.cursor(cursor_factory=DictCursor)
 
+# Model for embedding
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
 """
 Všechny následující funkce může vykonávat pouze uživatel s rolí admin.
 
@@ -263,8 +266,6 @@ def ai_model_func():
     English:
     Function for processing the AI model.
     """
-    # Model for embedding
-    model = SentenceTransformer('all-MiniLM-L6-v2')
 
     cur.execute("DELETE FROM embeddings")
     conn.commit()
@@ -309,9 +310,12 @@ def ai_model_func():
         for channel, device, embedding in zip(channel_names, device_names, embeddings):
             vector_str = json.dumps(embedding.tolist())
             cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)",
-                        (channel, device, vector_str))
+                        (channel, device, embedding.tolist()))
             cur.execute("SELECT COUNT(channel) FROM embeddings")
             existing_count = cur.fetchone()[0]
+            cur.execute("CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);")
+            cur.execute("ANALYZE embeddings;")
+            conn.commit()
 
             status_message = f"✅ Successfully connected to OPC UA. Found {existing_count} channels."
         conn.commit()

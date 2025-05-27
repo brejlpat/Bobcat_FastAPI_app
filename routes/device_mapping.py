@@ -44,6 +44,8 @@ templates = Jinja2Templates(directory="templates")
 opc_client = None
 status_message = "❌ Disconnected"
 
+model = SentenceTransformer("all-MiniLM-L6-v2")  # model for search bar
+
 
 @router.get("/lines", response_class=HTMLResponse)
 async def devices(request: Request, user: User = Depends(get_current_user)):
@@ -76,30 +78,67 @@ async def device(request: Request, user: User = Depends(get_current_user)):
     Displays the device mapping screen for a specific line.
     """
 
-    global status_message
+    global opc_client, status_message
     line = request.query_params.get("line", "❌")
     state.line = line
     state.title = f"Device Mapping - {state.line}"
+
+    #await connect_opcua(request, user)
+    try:
+        opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
+        opc_client.set_security_string(
+            "Basic256Sha256,SignAndEncrypt,"
+            "certs_dbr/client_cert.der,"
+            "certs_dbr/client_key.pem,"
+            "certs_dbr/server_cert.der"
+        )
+
+        opc_client.application_uri = "urn:FreeOpcUa:python:client"
+        opc_client.set_user(os.getenv("kepserver_user"))
+        opc_client.set_password(os.getenv("kepserver_password"))
+        opc_client.connect()
+
+        state.is_connected = True
+        status_message = "✅ Connected"
+    except Exception as e:
+        status_message = f"❌ Connection error: {e}"
+        state.is_connected = False
+
+    opc_devices = []
+    objects = opc_client.get_objects_node()
+    channels = objects.get_children()
+
+    for ch in channels:
+        ch_name = ch.get_browse_name().Name
+        if ch_name[0] != "_" and ch_name != "Server" and state.line in ch_name:
+            for dev in ch.get_children():
+                dev_name = dev.get_browse_name().Name
+                if dev_name[0] != "_":
+                    opc_devices.append({
+                        "channel": ch_name,
+                        "device": dev_name
+                    })
+
+    state.opc_devices = opc_devices
+
     return templates.TemplateResponse("device.html", {
         "request": request,
         "is_connected": state.is_connected,
         "status_message": status_message,
         "opc_devices": state.opc_devices,
-        "line": state.line,
         "title": state.title,
+        "line": state.line,
         "username": user.username,
         "role": user.role
     })
 
 
-@router.post("/connect_opcua")
+"""@router.post("/connect_opcua")
 async def connect_opcua(request: Request, user: User = Depends(get_current_user)):
-    """
     Připojí se k OPC UA serveru a načte zařízení na vybrané lince.
 
     English:
     Connects to the OPC UA server and loads devices on the selected line.
-    """
 
     global opc_client, status_message
 
@@ -151,7 +190,7 @@ async def connect_opcua(request: Request, user: User = Depends(get_current_user)
         "line": state.line,
         "username": user.username,
         "role": user.role
-    })
+    })"""
 
 
 @router.post("/disconnect_opcua")
@@ -787,42 +826,37 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
 
 @router.post("/search")
 async def search(request: Request, user: User = Depends(get_current_user)):
-    """
-    Prohledá zařízení podle názvu a vrátí výsledky.
-
-    English:
-    Searches for devices by name and returns results.
-    """
-
     form_data = await request.form()
     search_query = form_data.get("search_query", "").strip()
 
-    model = SentenceTransformer("all-MiniLM-L6-v2")  # nebo jiný model
-    query_vec = model.encode(search_query).tolist()
+    if search_query.lower() == "loader":
+        search_query = ldr
+    elif search_query.lower() == "excavator":
+        search_query = mex
 
     if not search_query:
         return RedirectResponse(url="/device_mapping/lines", status_code=303)
 
     state.title = f"Results for '{search_query}'"
+    query_vec = model.encode(search_query).tolist()
+
     try:
+        cur.execute("SET ivfflat.probes = 100;")  # nebo až 100, pro menší dataset klidně 100%
+        conn.commit()
         cur.execute("""
             SELECT channel, device, embedding <=> %s::vector AS distance
             FROM embeddings
+            WHERE embedding <=> %s::vector < 0.6
             ORDER BY distance
-            LIMIT 10;
-        """, (query_vec,))
+            LIMIT 50;
+        """, (query_vec, query_vec))
         results = cur.fetchall()
         conn.commit()
     except Exception as e:
         conn.rollback()
+        raise HTTPException(status_code=500, detail=f"Vector search failed: {e}")
 
-    opc_devices = []
-    for channel, device, embedding in results:
-        opc_devices.append({
-            "channel": channel,
-            "device": device
-        })
-    state.opc_devices = opc_devices
+    state.opc_devices = [{"channel": ch, "device": dev, "distance": dist} for ch, dev, dist in results]
     state.is_connected = True
     state.line = f"Search Results for {search_query}"
 
