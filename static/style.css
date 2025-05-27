@@ -583,7 +583,7 @@ tr:hover td {
 /* text pod ikonou */
 .device-links a p {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1.05rem;
   text-align: center;
 }
 
@@ -1165,9 +1165,20 @@ tr:hover td {
 }
 
 .search {
-  margin-top: 30px;
+  margin: 0 auto;
   display: flex;
   justify-content: center;
+}
+
+.search_column {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.search_column p {
+    margin: 0;
 }
 
 .search-form {
@@ -1181,7 +1192,7 @@ tr:hover td {
 
 .search-form input[type="text"] {
   flex: 1;
-  padding: 8px;
+  padding: 16px;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
