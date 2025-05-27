@@ -11,12 +11,14 @@ import json
 import shutil
 from app_state import state
 from routes.auth import get_current_user, User
+from routes.admin import ai_model_func
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import DictCursor
 from sentence_transformers import SentenceTransformer
+import pandas as pd
 
 # Načtení .env souboru
 # Load the .env file
@@ -315,6 +317,11 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
         conn.commit()
     else:
         status_message = "Failed to delete device."
+
+    # Funkce pro aktualizaci AI modelu
+    # Function for AI model update
+    ai_model_func()
+
     return templates.TemplateResponse("device_mapping.html", {"request": request, "status_message": status_message,
                                                               "is_connected": state.is_connected,
                                                               "title": state.title,
@@ -581,6 +588,10 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
         "device_id": device_id
     }
 
+    # Funkce pro aktualizaci AI modelu
+    # Function for AI model update
+    ai_model_func()
+
     return templates.TemplateResponse("device_details.html", {
         "request": request,
         "device_info": device_info,
@@ -725,6 +736,10 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
         "device_id": device_id
     }
 
+    # Funkce pro aktualizaci AI modelu
+    # Function for AI model update
+    ai_model_func()
+
     return templates.TemplateResponse("device_details.html", {
         "request": request,
         "device_info": device_info,
@@ -775,10 +790,6 @@ async def search(request: Request, user: User = Depends(get_current_user)):
     state.opc_devices = opc_devices
     state.is_connected = True
     state.line = f"Search Results for {search_query}"
-    print(opc_devices)
-
-    # Zde byste měli implementovat logiku pro hledání zařízení v databázi nebo jiném zdroji dat
-    # Here you should implement the logic to search for devices in the database or other data source
 
     return templates.TemplateResponse("device.html", {
         "request": request,
@@ -788,4 +799,30 @@ async def search(request: Request, user: User = Depends(get_current_user)):
         "username": user.username,
         "role": user.role,
         "line": state.line
+    })
+
+
+@router.get("/channel_device_list")
+async def channel_device_list(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí seznam kanálů a zařízení pro výběr.
+
+    English:
+    Displays a list of channels and devices for selection.
+    """
+
+    cur.execute("SELECT channel, device FROM embeddings;")
+    results = cur.fetchall()
+    opc_devices = pd.DataFrame(results, columns=["Channel", "Device"])
+    opc_devices.insert(0, "No", range(1, len(opc_devices) + 1))
+    opc_devices_dict = opc_devices.to_dict(orient="records")
+
+    state.title = "Channel Device List"
+    return templates.TemplateResponse("channel_list.html", {
+        "request": request,
+        "is_connected": state.is_connected,
+        "title": state.title,
+        "username": user.username,
+        "role": user.role,
+        "opc_devices": opc_devices_dict
     })

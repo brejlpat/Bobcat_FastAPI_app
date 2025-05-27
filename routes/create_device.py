@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from app_state import state
 from app_state import channel_properties
 from app_state import device_properties
+from routes.admin import ai_model_func
 import psycopg2
 from psycopg2.extras import DictCursor
 
@@ -235,6 +236,10 @@ async def create_device(
         status_message = f"❌ Error when creating the device: {response.status_code}"
 
     state.line = line
+
+    # Funkce pro aktualizaci AI modelu
+    # Function for AI model update
+    ai_model_func()
 
     return templates.TemplateResponse("device_mapping.html", {
         "request": request,

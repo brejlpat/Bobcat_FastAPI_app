@@ -256,21 +256,13 @@ async def users_log(request: Request, user: User = Depends(get_current_user)):
     })
 
 
-@router.get("/ai_model", response_class=HTMLResponse)
-async def ai_model(request: Request, user: User = Depends(get_current_user)):
+def ai_model_func():
     """
-    Zobrazí seznam AI modelů a jejich stav.
+    Funkce pro zpracování AI modelu.
 
     English:
-    Displays a list of AI models and their status.
+    Function for processing the AI model.
     """
-
-    if user.role != "admin":
-        return templates.TemplateResponse("home.html", {
-            "request": request,
-            "status_message": "You are not an admin, you cannot access this page."
-        })
-
     # Model for embedding
     model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -310,35 +302,45 @@ async def ai_model(request: Request, user: User = Depends(get_current_user)):
 
         opc_client.disconnect()
     except Exception as e:
-        return templates.TemplateResponse("home.html", {
-            "request": request,
-            "status_message": f"Error connecting to OPC UA: {e}",
-            "username": user.username,
-            "role": user.role
-        })
+        status_message = f"Error connecting to OPC UA: {e}"
+        return status_message
     if channel_names:
-        channel_count = len(channel_names)
-        print(f"From KepserverEX: {channel_count}")
         embeddings = model.encode(channel_names)
         for channel, device, embedding in zip(channel_names, device_names, embeddings):
             vector_str = json.dumps(embedding.tolist())
-            cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)", (channel, device, vector_str))
+            cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)",
+                        (channel, device, vector_str))
             cur.execute("SELECT COUNT(channel) FROM embeddings")
             existing_count = cur.fetchone()[0]
 
             status_message = f"✅ Successfully connected to OPC UA. Found {existing_count} channels."
         conn.commit()
-        print(f"From DB: {existing_count}")
-        return templates.TemplateResponse("home.html", {
-            "request": request,
-            "status_message": status_message,
-            "username": user.username,
-            "role": user.role
-        })
+        return status_message
     else:
+        status_message = "No channels found in OPC UA."
+        return status_message
+
+
+@router.get("/ai_model", response_class=HTMLResponse)
+async def ai_model(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí seznam AI modelů a jejich stav.
+
+    English:
+    Displays a list of AI models and their status.
+    """
+
+    if user.role != "admin":
         return templates.TemplateResponse("home.html", {
             "request": request,
-            "status_message": "No channels found in OPC UA.",
-            "username": user.username,
-            "role": user.role
+            "status_message": "You are not an admin, you cannot access this page."
         })
+
+    status_message = ai_model_func()
+
+    return templates.TemplateResponse("home.html", {
+        "request": request,
+        "status_message": status_message,
+        "username": user.username,
+        "role": user.role
+    })

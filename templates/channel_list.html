@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div style="text-align: left">
+        <a href="/main/home" class="btn-back"><img src="../static/images/back-btn.png" alt="Back"></a>
+    </div>
+
+    <h1>Channel + device list</h1>
+    <table>
+        <tr class="thead">
+            <th>No.</th>
+            <th>Channel</th>
+            <th>Device</th>
+        </tr>
+        {% for element in opc_devices %}
+        <tr>
+            <td>{{ element.No }}</td>
+            <td>{{ element.Channel }}</td>
+            <td>{{ element.Device }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<script>
+function confirmUserDelete(event, userId) {
+    event.preventDefault(); // Zabrání odeslání formuláře
+
+    const confirmation = prompt("Type 'Confirm' to delete this user:");
+    if (confirmation === "Confirm") {
+        window.location.href = `/admin/delete_account/${userId}`;
+    } else if (confirmation !== null) {
+        alert("Action cancelled or confirmation text was incorrect.");
+    }
+}
+</script>
+
+{% endblock %}
