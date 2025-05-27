@@ -15,6 +15,9 @@
                 {% if key == "servermain.MULTIPLE_TYPES_DEVICE_DRIVER" or key == "PROJECT_ID" or key == "servermain.DEVICE_UNIQUE_ID" or key == "servermain.DEVICE_CHANNEL_ASSIGNMENT" %}
                     <label for="{{ key }}">{{ key }}</label>
                     <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}" readonly>
+                {% elif key == "servermain.DEVICE_MODEL" and driver != "Allen-Bradley ControlLogix Ethernet" %}
+                    <label for="{{ key }}">{{ key }}</label>
+                    <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}" readonly>
                 {% else %}
                     <label for="{{ key }}">{{ key }}</label>
                     <input type="text" id="{{ key }}" name="{{ key }}" value="{{ value }}">

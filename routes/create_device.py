@@ -166,6 +166,7 @@ async def create_device(
         device_port: str = Form(""),
         enet_port: str = Form(""),
         ip_address_TT: str = Form(""),
+        model: str = Form(""),
         line: str = Form(...),
         image: UploadFile = File(...),
         user: User = Depends(get_current_user)
@@ -195,6 +196,7 @@ async def create_device(
         payload = device_properties.OPC_UA_Client_device.copy()
         payload["common.ALLTYPES_NAME"] = device_name
         payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.DEVICE_MODEL"] = model
         payload.pop("PROJECT_ID", None)
     elif driver == "Allen-Bradley ControlLogix Ethernet":
         payload = device_properties.Allen_Bradley_ControlLogix_Ethernet_device.copy()
@@ -203,6 +205,7 @@ async def create_device(
         payload["controllogix_ethernet.DEVICE_PORT_NUMBER"] = int(device_port)
         payload["controllogix_ethernet.DEVICE_CL_ENET_PORT_NUMBER"] = int(enet_port)
         payload["common.ALLTYPES_DESCRIPTION"] = description
+        payload["servermain.DEVICE_MODEL"] = int(model)
         payload.pop("PROJECT_ID", None)
     elif driver == "Torque Tool Ethernet":
         payload = device_properties.Torque_Tool_Ethernet_device.copy()

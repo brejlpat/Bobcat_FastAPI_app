@@ -17,9 +17,11 @@
 
         <div class="icons-section">
             <a href="/device_mapping/show_tags?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Show tags</a>
-            <a href="/device_mapping/edit_device?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Edit device</a>
-            <a href="/device_mapping/edit_channel?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Edit channel</a>
-            <a href="#" class="btn-admin" onclick="confirmDelete('{{ device_info.channel }}', '{{ device_info.device }}')">Delete device</a>
+            {% if role == "admin" %}
+                <a href="/device_mapping/edit_device?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Edit device</a>
+                <a href="/device_mapping/edit_channel?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}" class="btn-admin">Edit channel</a>
+                <a href="#" class="btn-admin" onclick="confirmDelete('{{ device_info.channel }}', '{{ device_info.device }}')">Delete device</a>
+            {% endif %}
             <a href="/device_mapping/device_details?channel={{ device_info.channel }}&device={{ device_info.device }}&device_id={{ device_info.device_id }}&line={{ line }}" class="btn-admin">Refresh</a>
         </div>
         <p style="padding: 10px"> </p>

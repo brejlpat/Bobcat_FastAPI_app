@@ -581,7 +581,8 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
         "device_info": device_info,
         "status_message": status_message,
         "username": user.username,
-        "role": user.role
+        "role": user.role,
+        "driver": driver
     })
 
 

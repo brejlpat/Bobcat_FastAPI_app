@@ -76,7 +76,7 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
         opc_client.set_user(os.getenv("kepserver_user"))
         opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
-
+        status_message = "✅ Successfully connected to OPC UA server."
     except Exception as e:
         status_message = f"⚠️ Error connecting to OPC UA server: {e}"
 
