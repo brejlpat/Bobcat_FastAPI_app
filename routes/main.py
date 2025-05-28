@@ -61,8 +61,13 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
     """
     state.title = "Plant Status Overview"
 
-    # Zde se připojujeme k OPC UA serveru a získáváme hodnoty tagů
-    # Here we connect to the OPC UA server and retrieve tag values
+    line_names = [
+        "Blade_Mex", "Boom_Arm_Mex", "Cairo", "Frame_SSL", "Lift_Arm_SSL",
+        "Mex", "SSL", "SSL_Transmission", "Under_Carriage_Sirius",
+        "Undercarriage_Phoenix", "Upper_structure_Mex"
+    ]
+
+    tags_with_values = []
     try:
         opc_client = Client("opc.tcp://dbr-us-DFOPC.corp.doosan.com:49320")
         opc_client.set_security_string(
@@ -71,48 +76,33 @@ async def plant_status(request: Request, user: User = Depends(get_current_user))
             "certs_dbr/client_key.pem,"
             "certs_dbr/server_cert.der"
         )
-
         opc_client.application_uri = "urn:FreeOpcUa:python:client"
         opc_client.set_user(os.getenv("kepserver_user"))
         opc_client.set_password(os.getenv("kepserver_password"))
         opc_client.connect()
         status_message = "✅ Successfully connected to OPC UA server."
+
+        for name in line_names:
+            nodeid = f"ns=2;s=DBR_SITE_LINE_STATUS.Line_Status.line_status.{name}"
+            try:
+                node = opc_client.get_node(nodeid)
+                value = node.get_value()
+                tags_with_values.append({
+                    "name": name,
+                    "nodeid": nodeid,
+                    "value": value
+                })
+            except Exception as e:
+                tags_with_values.append({
+                    "name": name,
+                    "nodeid": nodeid,
+                    "value": f"⚠️ Error: {e}"
+                })
+
+        opc_client.disconnect()
+
     except Exception as e:
         status_message = f"⚠️ Error connecting to OPC UA server: {e}"
-
-    tags_with_values = []
-    try:
-        root = opc_client.get_objects_node()
-        channels = root.get_children()
-        for ch in channels:
-            ch_name = ch.get_browse_name().Name
-            # Potřebujeme channel DBR_SITE_LINE_STATUS
-            # We need channel DBR_SITE_LINE_STATUS
-            if ch_name == "DBR_SITE_LINE_STATUS":
-                devices = ch.get_children()
-                for dev in devices:
-                    dev_name = dev.get_browse_name().Name
-                    if dev_name == "Line_Status":
-                        for subfolder in dev.get_children():
-                            # Zde procházíme jednotlivé tagy a vybíráme jenom line_status + ukládáme do listu tags_with_values
-                            # Here we browse through individual tags and select only line_status + save to list tags_with_values
-                            if subfolder.get_browse_name().Name == "line_status":
-                                line_status_tags = subfolder.get_variables()
-                                for tag in line_status_tags:
-                                    try:
-                                        tags_with_values.append({
-                                            "name": tag.get_browse_name().Name,
-                                            "nodeid": tag.nodeid.to_string(),
-                                            "value": tag.get_value()
-                                        })
-                                    except Exception as e:
-                                        tags_with_values.append({
-                                            "name": "❓",
-                                            "nodeid": "❓",
-                                            "value": f"⚠️ Error: {e}"
-                                        })
-    except:
-        pass
 
     line = request.query_params.get("line") or "❌"
 

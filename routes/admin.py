@@ -267,8 +267,12 @@ def ai_model_func():
     Function for processing the AI model.
     """
 
-    cur.execute("DELETE FROM embeddings")
-    conn.commit()
+    cur.execute("SELECT to_regclass('public.embeddings');")
+    result = cur.fetchone()
+
+    if result and result[0] is not None:
+        cur.execute("DELETE FROM embeddings;")
+        conn.commit()
 
     try:
         # OPC UA připojení

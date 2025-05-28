@@ -187,7 +187,6 @@ async def create_device(
         payload = device_properties.OPC_UA_Client_device.copy()
         payload["common.ALLTYPES_NAME"] = device_name
         payload["common.ALLTYPES_DESCRIPTION"] = description
-        payload["servermain.DEVICE_MODEL"] = model
         payload.pop("PROJECT_ID", None)
     elif driver == "Allen-Bradley ControlLogix Ethernet":
         payload = device_properties.Allen_Bradley_ControlLogix_Ethernet_device.copy()

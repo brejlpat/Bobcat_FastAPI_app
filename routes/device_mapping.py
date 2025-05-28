@@ -770,7 +770,7 @@ async def search(request: Request, user: User = Depends(get_current_user)):
         cur.execute("""
             SELECT channel, device, embedding <=> %s::vector AS distance
             FROM embeddings
-            WHERE embedding <=> %s::vector < 0.6
+            WHERE embedding <=> %s::vector < 0.70
             ORDER BY distance
             LIMIT 50;
         """, (query_vec, query_vec))
@@ -815,4 +815,93 @@ async def channel_device_list(request: Request, user: User = Depends(get_current
         "username": user.username,
         "role": user.role,
         "opc_devices": opc_devices_dict
+    })
+
+
+@router.get("/edit_picture")
+async def edit_picture(request: Request, user: User = Depends(get_current_user)):
+    """
+    Zobrazí obrazovku pro úpravu obrázku kanálu.
+    Uživatel si vybere kanál a zobrazí se mu možnost nahrát nový obrázek.
+
+    English:
+    Displays the screen for editing the channel picture.
+    The user selects a channel and is shown the option to upload a new picture.
+    """
+
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    state.title = "Edit Channel Picture"
+    return templates.TemplateResponse("edit_picture.html", {
+        "request": request,
+        "device_info": device_info,
+        "title": state.title,
+        "username": user.username,
+        "role": user.role
+    })
+
+
+@router.post("/upload_picture")
+async def upload_picture(request: Request, user: User = Depends(get_current_user)):
+    """
+    Nahrává nový obrázek pro kanál.
+
+    English:
+    Uploads a new picture for the channel.
+    """
+    channel = request.query_params.get("channel")
+    device = request.query_params.get("device")
+    device_id = request.query_params.get("device_id")
+    line = request.query_params.get("line", "❌")
+    state.line = line
+
+    form_data = await request.form()
+
+    image_file = form_data.get("image")
+
+    device_info = {
+        "channel": channel,
+        "device": device,
+        "device_id": device_id
+    }
+
+    print("TYPE:", type(image_file), "VALUE:", image_file)
+
+    if not channel or not image_file:
+        status_message = "❌ Image file required."
+        return templates.TemplateResponse("device_details.html", {
+            "request": request,
+            "status_message": status_message,
+            "device_info": device_info,
+            "title": state.title,
+            "username": user.username,
+            "role": user.role
+        })
+
+    image_path = f"static/images/DEVICES_MAP/{channel}.png"
+    # delete the old image if it exists
+    if os.path.exists(image_path):
+        os.remove(image_path)
+
+    with open(image_path, "wb") as f:
+        f.write(await image_file.read())
+
+    status_message = f"✅ Image for channel '{channel}' uploaded successfully."
+
+    return templates.TemplateResponse("device_details.html", {
+        "request": request,
+        "status_message": status_message,
+        "device_info": device_info,
+        "line": state.line,
+        "title": state.title,
+        "username": user.username,
+        "role": user.role
     })

@@ -45,6 +45,11 @@ Struktura databází / Database structure
     - project_id
     - payload (json)
     - device_edit_date (auto)
+- embeddings   -> tabulka s embeddings pro AI model na vyhledávání zařízení/table of embeddings for AI model for search bar
+    - id (auto)
+    - channel
+    - device
+    - embedding (vector(384))
 """
 
 # DB připojení

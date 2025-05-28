@@ -1212,3 +1212,33 @@ tr:hover td {
   transform: scale(1.03);
   border: 1px solid #ea0000;
 }
+
+.form-group label.custom-file-upload {
+    color: white;
+}
+
+.custom-file-upload {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: black;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.form-group label.custom-file-upload:hover {
+    background-color: #0f1620;
+    border-color: #aaff55;
+    transform: scale(1.05);
+    color: #ea0000;
+}
+
+#file-chosen {
+    margin-left: 12px;
+    font-style: italic;
+    color: #666;
+}
