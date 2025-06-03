@@ -285,9 +285,9 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     else:
         status_message = "Failed to delete device."
 
-    # Funkce pro aktualizaci AI modelu
-    # Function for AI model update
-    ai_model_func()
+    # delete from DB from table embeddings
+    cur.execute("DELETE FROM embeddings WHERE channel = %s AND device = %s", (channel, device))
+    conn.commit()
 
     return templates.TemplateResponse("device_mapping.html", {"request": request,
                                                               "status_message": status_message,
@@ -802,7 +802,7 @@ async def channel_device_list(request: Request, user: User = Depends(get_current
     Displays a list of channels and devices for selection.
     """
 
-    cur.execute("SELECT channel, device FROM embeddings;")
+    cur.execute("SELECT channel, device FROM embeddings ORDER BY channel;")
     results = cur.fetchall()
     opc_devices = pd.DataFrame(results, columns=["Channel", "Device"])
     opc_devices.insert(0, "No", range(1, len(opc_devices) + 1))

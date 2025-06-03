@@ -13,6 +13,7 @@ from app_state import device_properties
 from routes.admin import ai_model_func
 import psycopg2
 from psycopg2.extras import DictCursor
+from sentence_transformers import SentenceTransformer
 
 # Načtení .env souboru
 # Load the .env file
@@ -32,6 +33,8 @@ cur = conn.cursor(cursor_factory=DictCursor)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
 @router.post("/channel")
@@ -227,7 +230,13 @@ async def create_device(
 
     # Funkce pro aktualizaci AI modelu
     # Function for AI model update
-    ai_model_func()
+    #ai_model_func()
+    channel_name_list = [channel_name]
+    embedding = model.encode(channel_name_list)
+    vector_str = json.dumps(embedding.tolist())
+    cur.execute("INSERT INTO embeddings (channel_name, device_name, embedding) VALUES (%s, %s, %s)",
+                (channel_name, device_name, vector_str))
+    conn.commit()
 
     return templates.TemplateResponse("device_mapping.html", {
         "request": request,
