@@ -13,6 +13,7 @@
             <th>Channel</th>
             <th>Device</th>
             <th>IP Address</th>
+            <th>Show details</th>
         </tr>
         {% for element in opc_devices %}
         <tr>
@@ -20,6 +21,7 @@
             <td>{{ element.Channel }}</td>
             <td>{{ element.Device }}</td>
             <td>{{ element.IP }}</td>
+            <td><a href="/device_mapping/device_details?channel={{ element.Channel }}&device={{ element.Device }}"><button>Go to</button></a></td>
         </tr>
         {% endfor %}
     </table>
