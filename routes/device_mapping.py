@@ -244,7 +244,6 @@ async def delete_device(request: Request, user: User = Depends(get_current_user)
     """
     channel = request.query_params.get("channel")
     device = request.query_params.get("device")
-
     state.title = f"Device Mapping - {state.line} devices"
     url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{channel}"
 
@@ -551,15 +550,19 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
     if get_response.status_code == 200:
         try:
             channel_data = get_response.json()
-            driver = channel_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "nothing1")
+            driver = channel_data.get("servermain.MULTIPLE_TYPES_DEVICE_DRIVER", "NaN")
         except ValueError:
-            driver = "nothing2"
-    else:
-        driver = "nothing3"
+            driver = "NaN"
 
     # Odeslání požadavku na úpravu (PATCH = částečná změna)
     response = requests.put(url, headers=headers, data=json.dumps(payload), auth=(username, password))
     # Výstup
+    if payload.get("servermain.DEVICE_ID_STRING"):
+        cur.execute("UPDATE embeddings SET ip_address = %s WHERE channel = %s",
+                    (payload["servermain.DEVICE_ID_STRING"], channel))
+    if payload.get("common.ALLTYPES_NAME"):
+        cur.execute("UPDATE embeddings SET device = %s WHERE channel = %s",
+                    (payload["common.ALLTYPES_NAME"], channel))
     if response.status_code == 200:
         status_message = f"✅ Device was successfully edited!\nTo see the changes you need to disconnect and connect again."
         cur.execute(
@@ -575,10 +578,6 @@ async def edit_device_post(request: Request, user: User = Depends(get_current_us
         "device": new_name,
         "device_id": device_id
     }
-
-    # Funkce pro aktualizaci AI modelu
-    # Function for AI model update
-    ai_model_func()
 
     return templates.TemplateResponse("device_details.html", {
         "request": request,
@@ -752,35 +751,49 @@ async def edit_channel_post(request: Request, user: User = Depends(get_current_u
 async def search(request: Request, user: User = Depends(get_current_user)):
     form_data = await request.form()
     search_query = form_data.get("search_query", "").strip()
-
-    if search_query.lower() == "loader":
-        search_query = ldr
-    elif search_query.lower() == "excavator":
-        search_query = mex
-
+    search_mode = form_data.get("search_mode", "")
     if not search_query:
         return RedirectResponse(url="/device_mapping/lines", status_code=303)
 
     state.title = f"Results for '{search_query}'"
     query_vec = model.encode(search_query).tolist()
+    if search_mode == "NAME":
+        if "10.52." in search_query:
+            status_message = "Please switch to IP ADDRESS search mode"
+            return templates.TemplateResponse("device_mapping.html", {
+                "request": request,
+                "status_message": status_message,
+                "title": state.title,
+                "username": user.username,
+                "role": user.role
+            })
+        try:
+            cur.execute("SET ivfflat.probes = 100;")  # nebo až 100, pro menší dataset klidně 100%
+            conn.commit()
+            cur.execute("""
+                SELECT channel, device, embedding <=> %s::vector AS distance
+                FROM embeddings
+                WHERE embedding <=> %s::vector < 0.70
+                ORDER BY distance
+                LIMIT 50;
+            """, (query_vec, query_vec))
+            results = cur.fetchall()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=f"Vector search failed: {e}")
+        state.opc_devices = [{"channel": ch, "device": dev, "distance": dist} for ch, dev, dist in results]
 
-    try:
-        cur.execute("SET ivfflat.probes = 100;")  # nebo až 100, pro menší dataset klidně 100%
-        conn.commit()
-        cur.execute("""
-            SELECT channel, device, embedding <=> %s::vector AS distance
-            FROM embeddings
-            WHERE embedding <=> %s::vector < 0.70
-            ORDER BY distance
-            LIMIT 50;
-        """, (query_vec, query_vec))
-        results = cur.fetchall()
-        conn.commit()
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=f"Vector search failed: {e}")
+    elif search_mode == "IP":
+        try:
+            cur.execute("SELECT channel, device, ip_address FROM embeddings WHERE ip_address = %s", (search_query,))
+            results = cur.fetchall()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise HTTPException(status_code=500, detail=f"IP search failed: {e}")
+        state.opc_devices = [{"channel": ch, "device": dev, "ip": ip} for ch, dev, ip in results]
 
-    state.opc_devices = [{"channel": ch, "device": dev, "distance": dist} for ch, dev, dist in results]
     state.line = f"Search Results for {search_query}"
 
     return templates.TemplateResponse("device.html", {
@@ -802,9 +815,9 @@ async def channel_device_list(request: Request, user: User = Depends(get_current
     Displays a list of channels and devices for selection.
     """
 
-    cur.execute("SELECT channel, device FROM embeddings ORDER BY channel;")
+    cur.execute("SELECT channel, device, ip_address FROM embeddings ORDER BY channel;")
     results = cur.fetchall()
-    opc_devices = pd.DataFrame(results, columns=["Channel", "Device"])
+    opc_devices = pd.DataFrame(results, columns=["Channel", "Device", "IP"])
     opc_devices.insert(0, "No", range(1, len(opc_devices) + 1))
     opc_devices_dict = opc_devices.to_dict(orient="records")
 
@@ -872,8 +885,6 @@ async def upload_picture(request: Request, user: User = Depends(get_current_user
         "device": device,
         "device_id": device_id
     }
-
-    print("TYPE:", type(image_file), "VALUE:", image_file)
 
     if not channel or not image_file:
         status_message = "❌ Image file required."

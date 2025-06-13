@@ -19,12 +19,19 @@
     </div>
 
     <div class="search_column">
-      <p>🔽 Search by a <strong>channel</strong> name 🔽</p>
+      <p>🔽 Search by a <strong>channel</strong> name or <strong>IP address</strong> 🔽</p>
+
+        <div class="toggle-container">
+          <div id="nameOption" class="toggle-option active" onclick="setViewMode('NAME')">NAME</div>
+          <div id="ipOption" class="toggle-option" onclick="setViewMode('IP')">IP ADDRESS</div>
+        </div>
+
         <div class="search">
             <form method="post" action="/device_mapping/search" class="search-form">
                 <input type="text" name="search_query" placeholder="Enter a keyword..." style="padding: 8px; width: 250px;">
+                <input type="hidden" name="search_mode" id="searchMode" value="NAME">
                 <button type="submit" style="padding: 8px;">Search</button>
-              </form>
+            </form>
         </div>
     <em>Click on your name in the top right corner and check <strong>Channels list</strong> to see all the channels.</em>
     </div>
@@ -53,5 +60,17 @@ document.getElementById("line-search-input").addEventListener("keydown", functio
     searchLine();
   }
 });
+</script>
+
+<script>
+let viewMode = "NAME"; // defaultní hodnota
+
+function setViewMode(mode) {
+  viewMode = mode;
+  document.getElementById("nameOption").classList.toggle("active", mode === "NAME");
+  document.getElementById("ipOption").classList.toggle("active", mode === "IP");
+
+  document.getElementById("searchMode").value = viewMode;
+}
 </script>
 {% endblock %}

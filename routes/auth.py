@@ -200,6 +200,7 @@ def get_current_user(access_token: str = Cookie(None)) -> User:
             raise HTTPException(status_code=401, detail="Invalid token content")
 
         return User(username=username, role=role)
+
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except JWTError as e:

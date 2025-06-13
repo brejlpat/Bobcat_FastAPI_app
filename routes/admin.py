@@ -7,6 +7,7 @@ from psycopg2.extras import DictCursor
 from opcua import Client, ua
 from opcua.ua.uaerrors import UaError
 import requests
+from requests.auth import HTTPBasicAuth
 import pandas as pd
 from email.message import EmailMessage
 import smtplib
@@ -295,6 +296,7 @@ def ai_model_func():
         # Výstupní list channelů
         channel_names = []
         device_names = []
+        ip_addresses = []
 
         for ch in channels:
             ch_name = ch.get_browse_name().Name
@@ -305,16 +307,35 @@ def ai_model_func():
                         channel_names.append(ch_name)
                         device_names.append(dev_name)
 
+                        try:
+                            url_id = f"http://dbr-us-DFOPC.corp.doosan.com:57412/config/v1/project/channels/{ch_name}/devices/{dev_name}"
+                            response = requests.get(
+                                url_id,
+                                auth=HTTPBasicAuth(os.getenv("kepserver_user"), os.getenv("kepserver_password")),
+                                headers={"Content-Type": "application/json"}
+                            )
+                            response.raise_for_status()  # vyhodí chybu, pokud response není OK
+
+                            device_data = response.json()
+                            ip_address = device_data.get("servermain.DEVICE_ID_STRING", "Nan")
+                            if ">" in ip_address:
+                                ip_address1 = ip_address.split(">")
+                                ip_address2 = ip_address1[0]
+                                ip_address = ip_address2[1:]
+                        except Exception as e:
+                            ip_address = f"Error ({str(e)})"
+
+                        ip_addresses.append(ip_address)
+
         opc_client.disconnect()
     except Exception as e:
         status_message = f"Error connecting to OPC UA: {e}"
         return status_message
     if channel_names:
         embeddings = model.encode(channel_names)
-        for channel, device, embedding in zip(channel_names, device_names, embeddings):
-            vector_str = json.dumps(embedding.tolist())
-            cur.execute("INSERT INTO embeddings (channel, device, embedding) VALUES (%s, %s, %s)",
-                        (channel, device, embedding.tolist()))
+        for channel, device, embedding, ip_addr in zip(channel_names, device_names, embeddings, ip_addresses):
+            cur.execute("INSERT INTO embeddings (channel, device, embedding, ip_address) VALUES (%s, %s, %s, %s)",
+                        (channel, device, embedding.tolist(), ip_addr))
             cur.execute("SELECT COUNT(channel) FROM embeddings")
             existing_count = cur.fetchone()[0]
             cur.execute("CREATE INDEX ON embeddings USING ivfflat (embedding vector_cosine_ops) WITH (lists = 10);")

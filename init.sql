@@ -34,5 +34,6 @@ CREATE TABLE IF NOT EXISTS embeddings (
     id SERIAL PRIMARY KEY,
     channel TEXT,
     device TEXT,
-    embedding VECTOR(384)
+    embedding VECTOR(384),
+    ip_address TEXT
 );

@@ -160,7 +160,7 @@ async def create_device(
         device_port: str = Form(""),
         enet_port: str = Form(""),
         ip_address_TT: str = Form(""),
-        model: str = Form(""),
+        model_kep: str = Form(""),
         line: str = Form(...),
         image: UploadFile = File(...),
         user: User = Depends(get_current_user)
@@ -198,7 +198,7 @@ async def create_device(
         payload["controllogix_ethernet.DEVICE_PORT_NUMBER"] = int(device_port)
         payload["controllogix_ethernet.DEVICE_CL_ENET_PORT_NUMBER"] = int(enet_port)
         payload["common.ALLTYPES_DESCRIPTION"] = description
-        payload["servermain.DEVICE_MODEL"] = int(model)
+        payload["servermain.DEVICE_MODEL"] = int(model_kep)
         payload.pop("PROJECT_ID", None)
     elif driver == "Torque Tool Ethernet":
         payload = device_properties.Torque_Tool_Ethernet_device.copy()
@@ -228,14 +228,19 @@ async def create_device(
 
     state.line = line
 
+    if ip_address_TT:
+        ip_address = ip_address_TT
+    elif ip_address_AB:
+        ip1 = ip_address_AB.split(">")[0]
+        ip_address = ip1[1:]
+
     # Funkce pro aktualizaci AI modelu
     # Function for AI model update
-    #ai_model_func()
     channel_name_list = [channel_name]
-    embedding = model.encode(channel_name_list)
+    embedding = model.encode(channel_name_list)[0]
     vector_str = json.dumps(embedding.tolist())
-    cur.execute("INSERT INTO embeddings (channel_name, device_name, embedding) VALUES (%s, %s, %s)",
-                (channel_name, device_name, vector_str))
+    cur.execute("INSERT INTO embeddings (channel, device, embedding, ip_address) VALUES (%s, %s, %s, %s)",
+                (channel_name, device_name, vector_str, ip_address))
     conn.commit()
 
     return templates.TemplateResponse("device_mapping.html", {

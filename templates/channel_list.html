@@ -12,12 +12,14 @@
             <th>No.</th>
             <th>Channel</th>
             <th>Device</th>
+            <th>IP Address</th>
         </tr>
         {% for element in opc_devices %}
         <tr>
             <td>{{ element.No }}</td>
             <td>{{ element.Channel }}</td>
             <td>{{ element.Device }}</td>
+            <td>{{ element.IP }}</td>
         </tr>
         {% endfor %}
     </table>

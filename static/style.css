@@ -1242,3 +1242,30 @@ tr:hover td {
     font-style: italic;
     color: #666;
 }
+
+.toggle-container {
+  display: flex;
+  margin: 7px auto;
+  border: 2px solid black;
+  border-radius: 8px;
+  overflow: hidden;
+  width: 30%;
+  user-select: none;
+  font-family: sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.toggle-option {
+  flex: 1;
+  text-align: center;
+  padding: 8px 10px;
+  background-color: #fff;
+  color: #FF4A00;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.toggle-option.active {
+  background-color: #FF4A00;
+  color: #fff;
+}
